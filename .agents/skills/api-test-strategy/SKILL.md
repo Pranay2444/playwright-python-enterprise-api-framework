@@ -1,0 +1,36 @@
+---
+name: api-test-strategy
+description: Plan and add tests in this Python Playwright API portfolio using risk-based coverage, the test pyramid, dynamic data, and isolated fixtures. Use when designing an endpoint test, extending a client, reviewing coverage, or preparing a phase test plan.
+---
+
+# Plan and implement API coverage
+
+1. Read the repository README and [testing strategy](../../../docs/testing-strategy.md).
+   Inspect the current [test plan](../../../docs/test-plan.md) and the relevant client/tests.
+2. Confirm the endpoint's current official contract. Separate documented behavior,
+   project expectations, and unverified assumptions. Check service limitations before
+   planning persistence, authorization, or negative scenarios.
+3. Identify the concrete quality risk. Choose the cheapest useful layer: unit for
+   isolated policy, local HTTP for framework composition, live API for real service
+   compatibility. Reserve UI E2E for future critical browser journeys.
+4. Specify method/path, preconditions, status, response fields, business relationships,
+   data source, target, cleanup, and markers. Refer to the test pyramid; avoid fixed
+   public IDs, complete snapshots, and exact catalogue totals.
+5. Add the smallest domain-client method and test needed. Return `APIResponse`.
+   Keep assertions in the test and fresh payload creation in a factory. Use Pytest
+   fixture injection and preserve separate auth/public contexts.
+6. Extend the local HTTP model only enough to check wiring. Do not treat model
+   agreement as proof of a public contract. Add or retain an equivalent live case.
+7. Run the focused local test, `ruff check .`, `ruff format --check .`, and the local
+   suite. Run external tests only with explicit opt-in and an available network.
+8. Update the plan and report commands/results/limitations. Label contract, security,
+   performance, MFA, or DB coverage as planned until it exists and has been executed.
+
+For Phase 1, validate simulated cart-add responses without persistence claims.
+Keep login tokens in memory, per test. Preserve HTTP failures and avoid automatic
+business-request replay. Route failures to `agents/defect-triage.agent.md` at the
+repository root; do not hide them with skips or retries.
+
+Produce a concise plan containing: risk, layer, scenario, data/preconditions,
+expected result, marker/target, cleanup, and verification command. Follow it with
+the implemented change and executed evidence when implementation is requested.

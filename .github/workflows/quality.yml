@@ -1,0 +1,65 @@
+name: API framework quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      run_live:
+        description: Run the live DummyJSON suite as well
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m pip install --no-deps -e .
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: python -m pytest -m "not external" --junitxml=reports/local-results.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: local-results-${{ matrix.python-version }}
+          path: reports/*.xml
+          retention-days: 7
+
+  live-dummyjson:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_live
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m pip install --no-deps -e .
+      - run: python -m pytest -m external --run-external --junitxml=reports/live-results.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-dummyjson-results
+          path: reports/*.xml
+          retention-days: 7

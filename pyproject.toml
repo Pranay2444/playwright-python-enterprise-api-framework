@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "playwright-python-enterprise-api-framework"
+version = "0.1.0"
+description = "An incremental Playwright Python API testing portfolio, starting with DummyJSON."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["playwright>=1.51,<2", "python-dotenv>=1.0,<2"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.3,<10", "ruff>=0.11,<1", "build>=1.2,<2"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --strict-config --tb=short"
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(levelname)s %(name)s: %(message)s"
+junit_logging = "no"
+markers = [
+  "external: contacts a public service; requires --run-external",
+  "smoke: critical service checks",
+  "regression: broader behavior coverage",
+  "workflow: chained API calls, including simulated cart creation",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+extend-exclude = ["build", "dist"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
