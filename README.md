@@ -438,7 +438,7 @@ future services.
 
 ## Roadmap
 
-| Phase | Planned capability | Status |
+| Phase | Capability | Status |
 | --- | --- | --- |
 | 1 | Core transport, DummyJSON auth/products/users/carts, CI, learning docs | Implemented |
 | 2 | JSON Schema/Pydantic, contract checks, negative and boundary tests | Implemented |
@@ -454,7 +454,11 @@ fuzzing and load testing remain optional future work.
 ## Validation and sources
 
 [Validation notes](docs/validation.md) retain each phase's separate evidence.
-Phase 5 verification is recorded there with exact local/package/CI outcomes.
+Phase 5 passed **289 deterministic tests** locally and in each Python 3.11/3.12/3.13
+CI job. The owned CI job passed **50 PostgreSQL/real-SMTP tests with two workers**
+and **one installed-container workflow**, including image startup and app UID 10001.
+Package/wheel/assets, docs, formatting and lint checks passed. Run links and the
+repaired Mailpit adapter RCA are recorded there.
 The retained Phase 4 record has **203 passing deterministic tests** and **51 live-capable cases**:
 32 DummyJSON, 10 Booker, 4 ReqRes demo, and 5 ReqRes project. CI passed on Python
 **3.11, 3.12, and 3.13**. The explicit live run passed **46 cases** across DummyJSON,

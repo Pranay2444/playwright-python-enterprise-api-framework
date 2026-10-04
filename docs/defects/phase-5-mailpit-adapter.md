@@ -24,9 +24,12 @@
 - **Regression:** Both LF/CRLF bodies, a matching subject/recipient with wrong body
   challenge, non-hex base62 IDs, and unsafe ID length/query/traversal/Unicode rejection.
   Large synthetic upload parameters now have static test IDs to keep logs/JUnit small.
-- **Retest status:** Local focused/full/package and subsequent real CI outcomes are
-  recorded in [validation.md](../validation.md). Treat only the successful executed
-  run as closure evidence; the failed run remains linked for causal history.
+- **Retest status:** Closed by correction `30caa55` and the
+  [successful retest](https://github.com/Pranay2444/playwright-python-enterprise-api-framework/actions/runs/37219082102):
+  289 deterministic tests per Python matrix job, 50 PostgreSQL/SMTP tests with two
+  workers, and one installed-container workflow passed. Local focused reader/document
+  checks passed 27 cases. Package/wheel and artifact/cleanup checks passed; details in
+  [validation.md](../validation.md). The failed run remains linked for causal history.
 - **Impact / priority:** Blocked owned email integration validation and release gate.
   No production incident or real recipient impact is claimed.
 

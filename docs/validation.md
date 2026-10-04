@@ -21,7 +21,7 @@ and [domain defects/RCA](defect-management.md).
 | Wheel + sdist build | Passed |
 | Installed-wheel probe outside src | Both packages, three public schema assets, actual HTTP health/register/auth rejection passed |
 | Source archive contents | Compose/Docker/scripts/docs/schema assets present; no private keys, DBs or venv |
-| Markdown local file targets | 174 checked; remote URLs and anchors excluded |
+| Markdown local file targets | 175 checked; remote URLs and anchors excluded |
 | Workflow/Compose/issue-form YAML | Parsed successfully; not a Docker execution substitute |
 | Signing-key initializer | 0600 file/0700 directory, repeat invocation preserves value, git ignored; no key output |
 | Diff whitespace | Passed |
@@ -43,9 +43,9 @@ regressions, not a performance/exhaustive-concurrency proof.
 
 Initial source commit `e80a97d` was published without force. Its
 [first push run](https://github.com/Pranay2444/playwright-python-enterprise-api-framework/actions/runs/37218454842)
-passed all three quality jobs: Python3.11/3.12/3.13 each ran **284 deterministic
+passed all three quality jobs: Python 3.11/3.12/3.13 each ran **284 deterministic
 cases**, formatting/lint/build, installed-wheel HTTP/assets and docs checks.
-Docker startup and app PID1 UID10001 verification passed. The real PostgreSQL/SMTP
+Docker startup and app PID1 UID 10001 verification passed. The real PostgreSQL/SMTP
 job reported **31 failed, 19 passed** due to the Mailpit reader assuming UUID message
 IDs; container smoke was not executed. Artifact upload and disposable stack teardown
 completed. This is a framework adapter failure, retained in
@@ -57,9 +57,32 @@ and unsafe IDs. Focused reader/document checks: **27 passed**. A separate pre-fi
 CRLF unit case failed; the first CI did not reach its message body, so its newline
 format is not inferred. Final local suite is **289 passed**, recorded above.
 
-Real infrastructure retest is pending the correction push. No Docker/PostgreSQL
-service exists locally; only actual CI can confirm those paths. Do not treat the
-initial quality jobs or SQLite/captured email as a real SMTP/container pass.
+Correction commit `30caa55` passed the
+[real infrastructure retest](https://github.com/Pranay2444/playwright-python-enterprise-api-framework/actions/runs/37219082102).
+The inspected job logs and artifacts establish these executed outcomes:
+
+| Job / check | Actual outcome |
+| --- | --- |
+| Quality Python 3.11 | **289 passed; 52 deselected in 31.60 seconds** |
+| Quality Python 3.12 | **289 passed; 52 deselected in 29.76 seconds** |
+| Quality Python 3.13 | **289 passed; 52 deselected in 29.75 seconds** |
+| Every quality job | Ruff, build, installed-wheel real HTTP/assets and 175 local doc file targets passed |
+| Compose | Actual image build/start/readiness passed for PostgreSQL 17, Mailpit v1.31.4 and app |
+| Application privilege | PID1 effective execution UID 10001 check passed |
+| PostgreSQL + real SMTP/Mailpit | **50 passed in 18.48 seconds**, two xdist workers with isolated schemas |
+| Installed app container | **1 passed in 0.77 seconds**; email MFA/document/checksum/delete/refresh/logout |
+| Artifacts and cleanup | All four executed jobs uploaded JUnit artifacts; owned job stopped and removed its disposable volume successfully |
+
+Artifact names: `local-results-3.11`, `local-results-3.12`, `local-results-3.13`,
+`owned-lab-results`; configured retention is seven days. Failure receipts are
+uploaded when failures exist. All four public live jobs were disabled on this push;
+no new provider live outcome is implied. The source retest used Python 3.12.14 for
+owned infrastructure. Local Docker/PostgreSQL were unavailable; the actual checks
+above ran through GitHub Actions rather than a substitute model.
+
+A subsequent documentation-only commit records this evidence and closes the RCA;
+its push quality/owned gates validate the maintained repository state separately.
+No Python source, dependency pin, or workflow is changed by that evidence commit.
 
 ### Limits retained
 
