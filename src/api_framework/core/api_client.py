@@ -33,6 +33,7 @@ class ApiClient:
         params: Mapping[str, str | int | float | bool] | None = None,
         data: dict[str, Any] | None = None,
         headers: Mapping[str, str] | None = None,
+        multipart: dict[str, Any] | None = None,
     ) -> APIResponse:
         endpoint = urlsplit(path)
         if (
@@ -46,6 +47,8 @@ class ApiClient:
         ):
             raise ValueError("Use an origin-relative path and pass query values through params")
 
+        if data is not None and multipart is not None:
+            raise ValueError("Choose JSON data or multipart, not both")
         request_headers = dict(headers or {})
         if self.token_manager is not None:
             if any(name.lower() == "authorization" for name in request_headers):
@@ -54,6 +57,7 @@ class ApiClient:
 
         start = perf_counter()
         try:
+            options = {"multipart": multipart} if multipart is not None else {}
             response = self.context.fetch(
                 path,
                 method=method.upper(),
@@ -63,6 +67,7 @@ class ApiClient:
                 fail_on_status_code=False,
                 max_retries=0,
                 max_redirects=0,
+                **options,
             )
         except Error:
             # Playwright's transport call log can include headers. Keep it out of reports.

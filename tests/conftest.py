@@ -18,11 +18,18 @@ from tests.support.local_booker import LocalBooker
 from tests.support.local_reqres import LocalReqRes
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+pytest_plugins = ["api_framework.reporting.pytest_plugin"]
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addoption(
         "--run-external", action="store_true", default=False, help="Enable live public API tests"
+    )
+    parser.addoption(
+        "--lab-postgres", action="store_true", help="Use disposable PostgreSQL lab schemas"
+    )
+    parser.addoption(
+        "--lab-mailpit", action="store_true", help="Use real SMTP and Mailpit retrieval"
     )
 
 
