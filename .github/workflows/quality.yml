@@ -16,6 +16,16 @@ on:
         required: true
         default: false
         type: boolean
+      run_live_reqres_demo:
+        description: Run the live ReqRes public demo suite as well
+        required: true
+        default: false
+        type: boolean
+      run_live_reqres_project:
+        description: Run live ReqRes project CRUD with configured secrets and variables
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -62,11 +72,62 @@ jobs:
           cache-dependency-path: requirements-dev.txt
       - run: python -m pip install -r requirements-dev.txt
       - run: python -m pip install --no-deps -e .
-      - run: python -m pytest -m "external and not booker" --run-external --junitxml=reports/live-results.xml
+      - run: python -m pytest -m "external and not booker and not reqres" --run-external --junitxml=reports/live-results.xml
       - uses: actions/upload-artifact@v7.0.1
         if: always()
         with:
           name: live-dummyjson-results
+          path: reports/*.xml
+          retention-days: 7
+
+  live-reqres-demo:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_live_reqres_demo
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m pip install --no-deps -e .
+      - run: python -m pytest -m "reqres_demo and external" --run-external --junitxml=reports/reqres-demo-results.xml
+      - uses: actions/upload-artifact@v7.0.1
+        if: always()
+        with:
+          name: live-reqres-demo-results
+          path: reports/*.xml
+          retention-days: 7
+
+  live-reqres-project:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_live_reqres_project
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      REQRES_API_KEY: ${{ secrets.REQRES_API_KEY }}
+      REQRES_PROJECT_ID: ${{ vars.REQRES_PROJECT_ID }}
+      REQRES_COLLECTION: ${{ vars.REQRES_COLLECTION || 'products' }}
+      REQRES_ENV: ${{ vars.REQRES_ENV || 'prod' }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m pip install --no-deps -e .
+      - name: Require project configuration
+        run: python -c "from api_framework.config import ReqResSettings; ReqResSettings.from_env().require_project()"
+      - run: python -m pytest -m "reqres_project and external" --run-external --junitxml=reports/reqres-project-results.xml
+      - uses: actions/upload-artifact@v7.0.1
+        if: always()
+        with:
+          name: live-reqres-project-results
           path: reports/*.xml
           retention-days: 7
 

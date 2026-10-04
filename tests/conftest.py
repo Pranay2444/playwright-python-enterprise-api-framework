@@ -11,10 +11,11 @@ from api_framework.clients.dummyjson.auth_client import AuthClient
 from api_framework.clients.dummyjson.carts_client import CartsClient
 from api_framework.clients.dummyjson.products_client import ProductsClient
 from api_framework.clients.dummyjson.users_client import UsersClient
-from api_framework.config import BookerSettings, Settings
+from api_framework.config import BookerSettings, ReqResSettings, Settings
 from api_framework.core.api_client import ApiClient
 from tests.support.local_api import LocalApi
 from tests.support.local_booker import LocalBooker
+from tests.support.local_reqres import LocalReqRes
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -52,6 +53,12 @@ def local_booker() -> Iterator[LocalBooker]:
         yield server
 
 
+@pytest.fixture
+def local_reqres() -> Iterator[LocalReqRes]:
+    with LocalReqRes() as server:
+        yield server
+
+
 @pytest.fixture(params=["local", pytest.param("live", marks=pytest.mark.external)])
 def settings(request: pytest.FixtureRequest) -> Settings:
     if request.param == "local":
@@ -61,7 +68,7 @@ def settings(request: pytest.FixtureRequest) -> Settings:
 
 
 def create_context(
-    playwright: Playwright, settings: Settings | BookerSettings
+    playwright: Playwright, settings: Settings | BookerSettings | ReqResSettings
 ) -> APIRequestContext:
     return playwright.request.new_context(
         base_url=settings.base_url,

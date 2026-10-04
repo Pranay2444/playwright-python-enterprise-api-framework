@@ -1,6 +1,7 @@
 """Read environment variables once, when pytest creates its settings fixture."""
 
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -75,5 +76,41 @@ class BookerSettings:
             ),
             username=os.getenv("BOOKER_USERNAME", "admin"),
             password=os.getenv("BOOKER_PASSWORD", "password123"),
+            timeout_ms=int(os.getenv("API_TIMEOUT_MS", "15000")),
+        )
+
+
+@dataclass(frozen=True)
+class ReqResSettings:
+    base_url: str = "https://reqres.in"
+    api_key: str = field(default="", repr=False)
+    project_id: str = ""
+    collection: str = "products"
+    environment: str = "prod"
+    timeout_ms: int = 15_000
+
+    def __post_init__(self) -> None:
+        validate_origin(self.base_url)
+        if self.timeout_ms <= 0:
+            raise ValueError("timeout_ms must be positive")
+        if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", self.collection):
+            raise ValueError("ReqRes collection must be a safe slug")
+        if self.environment not in {"prod", "dev"}:
+            raise ValueError("ReqRes environment must be prod or dev")
+
+    def require_project(self) -> None:
+        if not self.api_key or not self.project_id.strip():
+            raise ValueError("Set REQRES_API_KEY and REQRES_PROJECT_ID for project tests")
+
+    @classmethod
+    def from_env(cls, env_file: Path | None = None) -> "ReqResSettings":
+        if env_file is not None:
+            load_dotenv(env_file, override=False)
+        return cls(
+            base_url=os.getenv("REQRES_BASE_URL", "https://reqres.in").rstrip("/"),
+            api_key=os.getenv("REQRES_API_KEY", ""),
+            project_id=os.getenv("REQRES_PROJECT_ID", ""),
+            collection=os.getenv("REQRES_COLLECTION", "products"),
+            environment=os.getenv("REQRES_ENV", "prod"),
             timeout_ms=int(os.getenv("API_TIMEOUT_MS", "15000")),
         )

@@ -1,12 +1,14 @@
 # Playwright Python Enterprise API Framework
 
-**Phase 3: a multi-service API framework with persistent booking lifecycle tests and failure-safe cleanup.**
+**Phase 4: one API framework across Bearer tokens, cookie sessions, and project API keys.**
 
 This project uses **Python + Pytest + Playwright APIRequestContext** to test the
-DummyJSON e-commerce API and the Restful Booker booking API. Shared transport,
+DummyJSON e-commerce API, Restful Booker booking API, and ReqRes. Shared transport,
 configuration rules, and response validation support separate service adapters.
 DummyJSON covers discovery and simulated carts; Booker adds persistent CRUD within
-the lifetime of its shared demo dataset.
+the lifetime of its shared demo dataset. ReqRes adds public fixture scenarios and
+an API-key-authenticated persistent project adapter. Project live verification
+requires your own manage key; see the validation record for executed outcomes.
 
 The word "enterprise" describes the direction of this learning project. This is
 not a finished production framework. The capability table below separates working
@@ -19,7 +21,8 @@ features from the roadmap.
 3. Read [the Phase 1 walkthrough](docs/phase-1-walkthrough.md) while opening the code.
 4. Continue with [the Phase 2 walkthrough](docs/phase-2-walkthrough.md) for contracts and negative testing.
 5. Follow [the Phase 3 walkthrough](docs/phase-3-walkthrough.md) for booking lifecycle and cleanup.
-6. Run either live service suite explicitly when network access is available.
+6. Read [the Phase 4 walkthrough](docs/phase-4-walkthrough.md) for API keys, project data, and quotas.
+7. Run selected live suites explicitly; configure your own key before ReqRes project tests.
 
 ## What is implemented
 
@@ -29,13 +32,14 @@ features from the roadmap.
 | Configuration | Validated settings, `.env.example`, environment override precedence |
 | Authentication | Login, Bearer header injection, explicit refresh, token invalidation |
 | Token caching | One `TokenManager` per test, proactive refresh with a 30-second margin |
-| Domain clients | DummyJSON auth/products/users/carts and Restful Booker auth/bookings |
-| Persistent lifecycle | Create → read → PUT → read → PATCH → read → delete → 404 |
+| Domain clients | DummyJSON auth/products/users/carts, Booker auth/bookings, ReqRes demo users/project records |
+| Persistent lifecycle | Booker CRUD/PATCH; ReqRes project create/read/PUT/delete with separate GET checks |
 | Booker authentication | Per-test token cookie attached only by the Booker mutation client; separate login context |
+| ReqRes authentication | Per-request x-api-key; explicit project/env; no invented login or refresh |
 | Cleanup | Register created IDs before schema assertions; verify owner marker; delete and confirm absence; report failures |
 | Dynamic data | Product IDs from catalogue responses; user IDs from auth/cart responses |
 | Data factories | Fresh carts and synthetic bookings with unique markers and validated date order |
-| Response contracts | Packaged JSON Schema Draft 2020-12 contracts for both services, including booking/ID-array shapes |
+| Response contracts | Packaged Draft 2020-12 contracts for all three services; reviewed ReqRes OpenAPI excerpt |
 | Typed validation | Strict Pydantic product views and cart input models; no numeric-string coercion |
 | Assertions | HTTP status, exact JSON media type, schema structure, and business relationships |
 | Negative coverage | Missing/invalid credentials and tokens, invalid IDs, malformed cart lists, unsupported method |
@@ -44,7 +48,8 @@ features from the roadmap.
 | Diagnostics | Method, endpoint path, status, and elapsed time; no payload/header logging |
 | Repeatable checks | Unit tests plus local HTTP checks using the real Playwright driver |
 | Public service checks | The same functional scenarios have an opt-in live target |
-| CI | Python 3.11/3.12/3.13 quality jobs; separate opt-in DummyJSON and Booker jobs; JUnit artifacts |
+| Rate-limit behavior | Return 429 and Retry-After unchanged; loopback checks prove no automatic replay |
+| CI | Python 3.11/3.12/3.13 quality; independent DummyJSON, Booker, ReqRes demo/project live jobs |
 | AI-assisted workflow | Repository instructions, testing skill, defect triage/RCA guide |
 
 **Important DummyJSON behavior:** cart additions return simulated results and are
@@ -81,6 +86,11 @@ transport without pretending that cookie authentication is a Bearer-token lifecy
 | `src/api_framework/auth/token_manager.py` | Cache, refresh, and invalidate tokens |
 | `src/api_framework/clients/dummyjson/` | DummyJSON endpoint paths and payload details |
 | `src/api_framework/clients/restful_booker/` | Booker login/session and booking CRUD methods |
+| `src/api_framework/clients/reqres/` | Demo users, API-key header policy, project records |
+| `src/api_framework/data/record_factory.py` | Strict starter product data with synthetic name markers |
+| `tests/reqres/` | Separate demo and project fixtures/scenarios |
+| `tests/support/record_lifecycle.py` | Owned record tracking and visible cleanup |
+| `tests/support/local_reqres.py` | Small fixture/persistent loopback model |
 | `src/api_framework/data/booking_factory.py` | Strict synthetic booking payloads and ISO date serialization |
 | `tests/booker/conftest.py` | Independent targets, contexts, auth, and lifecycle tracker fixture |
 | `tests/booker/test_bookings.py` | Persistent workflow, filtering, PATCH boundaries, auth rejection |
@@ -140,14 +150,17 @@ Windows PowerShell: create the venv with `py -3 -m venv .venv`, activate with
 | Local contract checks | `python -m pytest -m "contract and not external"` |
 | Local rejected requests | `python -m pytest -m "negative and not external"` |
 | Local boundary checks | `python -m pytest -m "boundary and not external"` |
-| Live DummyJSON only | `python -m pytest -m "external and not booker" --run-external` |
+| Live DummyJSON only | `python -m pytest -m "external and not booker and not reqres" --run-external` |
 | Local Booker only | `python -m pytest -m "booker and not external"` |
 | Live Booker only | `python -m pytest -m "booker and external" --run-external` |
-| All live services | `python -m pytest -m external --run-external` |
+| Local ReqRes | `python -m pytest -m "reqres and not external"` |
+| Live ReqRes demo | `python -m pytest -m "reqres_demo and external" --run-external` |
+| Live ReqRes project (configured key) | `python -m pytest -m "reqres_project and external" --run-external` |
+| All live services (configured key) | `python -m pytest -m external --run-external` |
 | Cleanup fault injection | `python -m pytest tests/local/test_booking_cleanup.py` |
 | Live smoke only | `python -m pytest -m "smoke and external" --run-external` |
 | Both targets plus framework checks | `python -m pytest --run-external` |
-| Cart workflow locally | `python -m pytest -m "workflow and not external"` |
+| Workflows locally | `python -m pytest -m "workflow and not external"` |
 | Framework unit checks only | `python -m pytest tests/unit` |
 | Produce a report | `python -m pytest -m "not external" --junitxml=reports/local-results.xml` |
 | Lint / formatting | `ruff check .` / `ruff format --check .` |
@@ -252,6 +265,38 @@ Read [the Phase 3 test plan](docs/phase-3-test-plan.md) and
 [walkthrough](docs/phase-3-walkthrough.md) for fixture ordering, cleanup failures,
 source-backed status conventions, practice exercises, and interview explanations.
 
+## Phase 4: ReqRes demo and project records
+
+ReqRes's public demo has fixture users and simulated creates. Its project API stores
+records behind `x-api-key`; these are separate clients, fixtures, tests, and CI jobs.
+The current LLM reference describes keyless demo access, while older docs/OpenAPI
+still declare keys on demo endpoints. Live results must resolve that discrepancy
+for the execution environment. No tutorial key is treated as a project credential.
+
+The project adapter wraps POST/PUT input as `{"data": {...}}`, includes `project_id`
+and `X-Reqres-Env`, and verifies persisted fields on a separate GET. Tests use the
+starter Products fields with unique `QA-<UUID>` names. Track IDs before assertions;
+preserve that marker in updates; verify ownership before DELETE and GET 404 after it.
+DELETE expects 204 and an empty body. A malformed negative create's unexpected
+success is also tracked for cleanup. No seed data or collection definitions are changed.
+
+Configure a dedicated QA project's manage key in ignored `.env` as `REQRES_API_KEY`,
+plus `REQRES_PROJECT_ID`; collection/env default to products/prod. For Actions,
+store the key as a repository Secret and the project ID as a repository Variable.
+[The walkthrough](docs/phase-4-walkthrough.md) gives the exact setup and commands.
+Missing project credentials fail before HTTP, not as a claimed live pass.
+
+The reviewed reference advertises a Free limit of 250 requests/day and 100 records;
+confirm your actual account entitlements. The project suite normally sends fifteen
+requests and creates two small records. Local injection checks show 429 and
+Retry-After remain visible without replay; public quota exhaustion is not tested.
+Record deletion may be soft: default API absence is not proof of database erasure
+or quota reclamation. Project PATCH, public-key permissions, app-user sessions,
+and full OpenAPI/provider verification remain outside this phase.
+
+Read [the Phase 4 plan](docs/phase-4-test-plan.md) for provider discrepancies,
+scenario mapping, cleanup limits, and point-in-time evidence.
+
 ## Authentication decisions
 
 - `TokenManager` receives a `TokenSource` protocol, so a future service can provide
@@ -279,8 +324,9 @@ real behavior of each public API. This repository has no UI tests yet.
 
 The workflow runs lint, formatting, distribution builds, and local tests on pushes to `main` and pull
 requests. A failure blocks that job. To run live tests in GitHub Actions, choose
-**Actions → API framework quality → Run workflow** and enable DummyJSON, Booker,
-or both. Each live job runs after quality succeeds, uses Python 3.12, and remains a separate
+**Actions → API framework quality → Run workflow** and enable the desired service
+checkboxes. ReqRes project execution needs the configured Secret/Variables.
+Each live job runs after quality succeeds, uses Python 3.12, and remains a separate
 signal from the deterministic checks. Workflow configuration alone does not enable
 branch protection; the repository owner must configure required checks if desired.
 
@@ -334,7 +380,7 @@ future services.
 | 1 | Core transport, DummyJSON auth/products/users/carts, CI, learning docs | Implemented |
 | 2 | JSON Schema/Pydantic, contract checks, negative and boundary tests | Implemented |
 | 3 | Restful Booker persistent booking create/read/update/patch/delete lifecycle | Implemented |
-| 4 | ReqRes adapter; verify current API-key, persistence, and plan requirements first | Planned |
+| 4 | ReqRes demo/project adapter, API keys, contracts, owned records, 429 checks | Implemented; project live compatibility needs your key |
 | 5 | Owned FastAPI app, JWT, PostgreSQL, Mailpit, MFA, file workflows | Planned |
 | Later | Local security/failure injection, Schemathesis/Hypothesis, Docker, richer reporting | Planned |
 
@@ -344,12 +390,10 @@ local environment. Those capabilities remain future work.
 
 ## Validation and sources
 
-[Validation notes](docs/validation.md) keep Phase 1/2 evidence and the Phase 3
-execution record separate. Phase 3 passed **149 deterministic tests** locally and
-on Python **3.11/3.12/3.13** in CI. The
-[explicit live run](https://github.com/Pranay2444/playwright-python-enterprise-api-framework/actions/runs/37204906955)
-passed **32 DummyJSON + 10 Booker cases**, including booking cleanup without
-teardown errors. These are point-in-time results against shared public demos.
+[Validation notes](docs/validation.md) retain each phase's separate evidence.
+Phase 4 has **203 passing deterministic tests** and **51 live-capable cases**:
+32 DummyJSON, 10 Booker, 4 ReqRes demo, and 5 ReqRes project. Collection alone is
+not live compatibility. See the record for CI/live outcomes and pending configuration.
 Official references used for this phase:
 
 - [Playwright Python API testing](https://playwright.dev/python/docs/api-testing)
@@ -364,6 +408,9 @@ Official references used for this phase:
 - [Phase 2 contract basis and maintenance policy](docs/contracts.md)
 - [Restful Booker API documentation](https://restful-booker.herokuapp.com/apidoc/index.html)
 - [Phase 3 provider basis and cleanup policy](docs/phase-3-test-plan.md)
+- [ReqRes current API reference](https://reqres.in/llm.txt)
+- [ReqRes OpenAPI](https://reqres.in/openapi.json)
+- [Phase 4 basis, limits, and test plan](docs/phase-4-test-plan.md)
 
 **Portfolio explanation:** "I built a layered Python API automation foundation using
 Playwright and Pytest. It separates HTTP transport, service clients, token handling,
@@ -372,4 +419,6 @@ isolated authentication, repeatable local checks, and optional live verification
 Phase 2 adds partial JSON Schema response contracts, strict Pydantic models, and
 negative/boundary cases while distinguishing framework policy from provider behavior.
 Phase 3 reuses the core for a second auth style and persistent booking lifecycle,
-with owned-resource tracking and tested cleanup after failures."
+with owned-resource tracking and tested cleanup after failures. Phase 4 adds
+API-key project records and distinguishes demo simulation, local wiring, and
+account-specific live evidence."

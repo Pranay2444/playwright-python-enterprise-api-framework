@@ -22,6 +22,12 @@
 | Booking disappears during a live test | Shared demo reset or competing writes | Preserve failed evidence; check the target/time; do not hide with retries |
 | Cleanup reports changed owner marker | ID reuse or a test changed lastname | Withhold deletion; inspect ownership and mutation code |
 | Cleanup fails after a test passes/fails | Separate teardown outcome | Preserve both results; check safe GET/DELETE statuses; do not swallow errors |
+| ReqRes project setup fails before HTTP | REQRES_API_KEY and REQRES_PROJECT_ID | Configure your QA manage key in ignored .env or GitHub Secret; project ID as a CI Variable |
+| ReqRes project returns 400 | Data wrapper, collection schema, prod/dev target | Use data nesting and the correct starter/equivalent schema; verify the current plan |
+| ReqRes demo returns 401/403 | Current demo-auth contract versus older docs, proxy/WAF evidence | Keep the failed result; no key guessing, TLS bypass, or automatic retry |
+| ReqRes returns 429 | Request budget, concurrent callers, quota/Retry-After | Preserve the response and review account limits; no automatic replay or quota-exhaustion loops |
+| ReqRes DELETE is 204 but JSON parsing fails | Empty successful response | Assert status and empty body, then separate GET 404 |
+| ReqRes project PATCH expectation | Reviewed OpenAPI has PUT but no project PATCH | Use implemented PUT; verify an actual PATCH contract before extending the adapter |
 
 Start a failure investigation with the smallest failing node:
 

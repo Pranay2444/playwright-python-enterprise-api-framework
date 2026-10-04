@@ -45,5 +45,13 @@ The contract registry selects checked-in files by an allowed service name; exist
 DummyJSON calls keep their default. `json_array` supports filtered booking ID lists.
 Test resource lifecycle/cleanup stays under `tests/support`, not in transport.
 
+Phase 4 adds `clients/reqres`: anonymous demo users and explicit API-key project
+records. `RecordsClient` wraps input in data, uses safe record paths, and sends the
+key per request with project/env configuration. It reuses transport, without a
+TokenSource or refresh fiction. `record_factory` validates starter product policy;
+`reqres.json` validates partial response shapes. `RecordTracker` stays in test
+support because cleanup is a test lifecycle concern. See the
+[Phase 4 guide](../docs/phase-4-walkthrough.md) before changing project auth/data.
+
 Richer auth providers and retry policies remain future work. Avoid speculative
 wrapper methods with no users.

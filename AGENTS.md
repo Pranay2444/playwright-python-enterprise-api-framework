@@ -1,6 +1,6 @@
 # Repository instructions for coding assistants
 
-This is a Phase 3 Python Playwright API automation learning/portfolio project.
+This is a Phase 4 Python Playwright API automation learning/portfolio project.
 Read README.md and docs/validation.md before describing its capabilities.
 
 ## Change approach
@@ -28,6 +28,14 @@ Read README.md and docs/validation.md before describing its capabilities.
   and surface failures. Do not add retries or treat a changed marker as successful cleanup.
 - Never include jsonschema error messages/instances or Pydantic `.errors()` input values
   in shared diagnostics; read docs/contracts.md before extending validation.
+- Keep ReqRes demo and project surfaces separate. Never claim demo writes persist.
+- Project tests require user-owned manage-key/project/env config; never hardcode or
+  substitute a tutorial key. Attach the key per request; keep it out of URLs/logs/repr.
+- Preserve ReqRes synthetic product name markers; track IDs before assertions,
+  including unexpected success from negative create tests; verify ownership/absence.
+- Use project PUT only: reviewed OpenAPI does not declare project PATCH. Check
+  current provider evidence before extending it or assuming a plan entitlement.
+- Keep 429/Retry-After visible without replay. Do not exhaust public quotas to test them.
 
 ## Verification
 
@@ -59,5 +67,9 @@ template. Do not publish issues/comments or message people unless asked to do so
 - Persistent booking lifecycle, independent auth, and owned-resource cleanup exist in Phase 3.
 - Booker uses 200 create/read/PUT/PATCH, 201 delete/ping, and 403 anonymous writes.
 - Its shared demo resets periodically: check ownership before deleting; GET/DELETE is not atomic.
+- ReqRes project adapter is implemented; live compatibility needs configured credentials
+  and an executed live result. Default GET 404 does not prove physical record erasure.
+- ReqRes's current LLM reference and older OpenAPI/docs disagree on demo auth; keep
+  observed failures and expectations separate. See docs/phase-4-test-plan.md.
 - Security fuzzing, MFA, DB checks, and UI are future phases.
 - The synchronous `TokenManager` is not thread-safe. Do not share it across threads.

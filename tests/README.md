@@ -9,7 +9,8 @@
 | `negative/` | Thirteen invalid request cases with expected statuses/error shape | Loopback or DummyJSON |
 | `boundary/` | Six page/search/quantity cases with business relationships | Loopback or DummyJSON |
 | `booker/` | Ten persistent lifecycle/auth/filter/boundary cases with isolated fixtures | Loopback or Booker |
-| `support/` | Small per-service HTTP models and owned-booking tracker | Random loopback ports |
+| `reqres/` | Four demo and five project cases, separate targets/auth/CI | Loopback or ReqRes; project live needs your key |
+| `support/` | Small per-service HTTP models and owned booking/record trackers | Random loopback ports |
 
 The `settings` fixture generates `[local]` and `[live]` cases. `[live]` carries the
 `external` marker and is skipped unless `--run-external` is present. Local HTTP uses
@@ -21,6 +22,9 @@ needed by this phase. Its responses are **not authoritative DummyJSON contracts*
 Local tests can pass even if the public service changes; run live checks to detect that.
 Booker has its own `booker_settings` fixture so service targets do not form a
 DummyJSON × Booker Cartesian product.
+ReqRes likewise has separate demo/project settings; adding it does not multiply
+the other services' target fixtures. A live project selection without configured
+key/project fails in setup before HTTP; it is not silently skipped.
 
 Fixture chain for an authenticated call:
 
@@ -42,6 +46,9 @@ python -m pytest tests/functional/test_auth.py -m external --run-external
 python -m pytest -m "regression and not external"
 python -m pytest -m "booker and not external"
 python -m pytest -m "booker and external" --run-external
+python -m pytest -m "reqres and not external"
+python -m pytest -m "reqres_demo and external" --run-external
+python -m pytest -m "reqres_project and external" --run-external
 python -m pytest --collect-only -q
 ```
 
@@ -57,3 +64,9 @@ For persistent Booker data, read [the Phase 3 guide](../docs/phase-3-walkthrough
 Keep the synthetic lastname marker unchanged during mutations. Never delete or
 update shared seed IDs. Eight loopback failure-injection checks validate cleanup,
 including early ID registration, ownership changes, failure continuation, and logs.
+
+ReqRes project tests use only records created by that test, preserving the synthetic
+name marker. Seventeen loopback checks cover cleanup (including negative-create
+unexpected success), key isolation, safe path segments, redacted logs/errors, and
+429/Retry-After without replay. Demo POST is simulated and needs no cleanup.
+See [Phase 4](../docs/phase-4-test-plan.md) for account setup and verification limits.

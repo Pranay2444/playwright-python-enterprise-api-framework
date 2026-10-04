@@ -18,6 +18,7 @@ class ContractValidationError(AssertionError):
 _SCHEMAS = {
     "dummyjson": ("dummyjson.json", "DummyJSON"),
     "restful_booker": ("restful_booker.json", "Restful Booker"),
+    "reqres": ("reqres.json", "ReqRes"),
 }
 
 

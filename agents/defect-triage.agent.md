@@ -30,6 +30,11 @@ an autonomous process or authorize publishing an issue.
    cookie-authenticated client, and teardown ordering. Distinguish the original test
    failure from any cleanup error. A reset or changed marker requires data/ownership
    investigation; never delete the currently occupying resource to make teardown pass.
+   For ReqRes, identify demo versus project surface, key source (never the key value),
+   project/env, wrapper nesting, marker preservation, and early ID registration.
+   Missing credentials are setup failures; a 429 is a rate/quota signal, and a 403
+   alone does not prove WAF or API authorization failure. Default record absence is
+   not proof of physical erasure. Consult the Phase 4 provider discrepancy record.
 6. List observations, competing hypotheses, and a discriminating next check.
    Mark RCA confirmed only when the evidence identifies the causal mechanism.
 7. Propose the smallest corrective action and a meaningful regression check. Rerun

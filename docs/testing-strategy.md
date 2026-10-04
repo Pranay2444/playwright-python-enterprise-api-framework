@@ -1,13 +1,14 @@
-# Testing strategy through Phase 3
+# Testing strategy through Phase 4
 
 ## Goal and scope
 
 Prove the framework is maintainable and that its clients can exercise the documented
-DummyJSON auth/product/user/cart flows and Restful Booker persistent bookings. Distinguish framework defects from public
+DummyJSON auth/product/user/cart flows, Restful Booker persistent bookings, and
+ReqRes demo/project records. Distinguish framework defects from public
 service failures. Use a repeatable local base and a small live service suite.
 
-Phases 2/3 add partial JSON Schema response contracts, strict Pydantic views/inputs,
-negative/boundary checks, a second auth style, and tracked persistent-resource cleanup.
+Phases 2–4 add partial JSON Schema response contracts, strict Pydantic views/inputs,
+negative/boundary checks, cookie/API-key auth, and tracked persistent-resource cleanup.
 The current scope excludes exhaustive OpenAPI/provider verification,
 performance SLAs, RBAC, database verification, MFA, UI flows, and security fuzzing.
 
@@ -17,8 +18,8 @@ performance SLAs, RBAC, database verification, MFA, UI flows, and security fuzzi
 | --- | --- | --- |
 | Unit | Cache reuse, timed refresh, failure invalidation, independent managers, config validation, payload isolation, malformed schema/model inputs, diagnostic redaction | Fast feedback without driver/network dependencies |
 | Local HTTP integration | Real Playwright requests, cookie/Bearer isolation, query encoding, exposed HTTP errors, transport error redaction, persistent CRUD wiring, cleanup failure injection | Verify components work together without public-service availability |
-| Live API functional/contract/negative/boundary | 32 DummyJSON + 10 Booker cases; seven synthetic bookings per Booker run | Confirm current real endpoint behavior and dynamic response chaining |
-| UI E2E | None through Phase 3 | Add only critical browser journeys when UI scope is introduced |
+| Live API functional/contract/negative/boundary | 32 DummyJSON + 10 Booker + 4 ReqRes demo + 5 configured ReqRes project cases | Confirm deployed behavior separately per service/surface; collection is not a pass |
+| UI E2E | None through Phase 4 | Add only critical browser journeys when UI scope is introduced |
 
 Treat the pyramid as an allocation of feedback cost and risk, not a fixed percentage.
 Local functional scenarios exercise the same client/test code as live scenarios,
@@ -38,6 +39,9 @@ for integration verification against the real service.
 | Secrets leak into diagnostics | No query/header/body logs; sanitized transport/schema exceptions; hidden model input errors; masked token/settings repr | Broader artifact redaction once richer reporting is introduced |
 | Persistent data survives failed assertions | Track IDs before contract checks; fixture teardown; owner checks; verify 404; visible cleanup failures | Owned-app atomic cleanup and durable resource ownership |
 | Cookie auth forced into Bearer lifecycle | Dedicated Booker session and anonymous client; no invented refresh | Additional auth adapters only when needed |
+| Project API key mixed with demo/Bearer auth | ReqRes per-request key, explicit target config, separate demo client and HTTP isolation check | Public-key/app-user permission coverage |
+| Quota failures hidden by request replay | Local 429/Retry-After preservation checks for four methods; small public request budgets | Owned-app enforcement and justified bounded retry policy |
+| Unverified provider/plan assumptions | Reviewed ReqRes OpenAPI excerpt and documented conflicts; account-specific live result kept separate | Recheck selected plan and live contract after configuration |
 | Public endpoint outage blocks all development | Deterministic CI and separate opt-in live job | Scheduled service checks after reliability/cost review |
 | Shape drift hidden by ad hoc assertions | Partial response schemas; strict typed views; malformed nested unit cases | Additional service-specific contracts |
 | Invalid data blocked before reaching a rejection test | Strict valid factories; raw dictionaries for server negatives | Owned-app validation matrices |
@@ -52,7 +56,10 @@ for integration verification against the real service.
 - Rebuild the local server per test, using a random loopback port.
 - Keep request contexts, tokens, and payloads per test. Dispose contexts even after failures.
 - For simulated writes, do not add meaningless cleanup calls. Real persistent writes
-  in future phases must track created resources and clean them up in fixture teardown.
+  track returned IDs before assertions and clean them up in fixture teardown.
+- ReqRes project live execution requires a user-owned manage key and explicit project/env.
+  Use only synthetic test-created record IDs; preserve name markers through PUT.
+  Register identifiable unexpected creations from negative POSTs before asserting rejection.
 
 ## Authentication and failure policy
 
@@ -123,3 +130,19 @@ See [the Phase 2 plan](phase-2-test-plan.md) for scenario/data/status mapping an
 A shared demo reset is a data/environment possibility, not automatic proof of an
 application defect. Do not add retries or broaden cleanup to search/delete seed data.
 See [the Phase 3 plan](phase-3-test-plan.md) for cleanup limits and evidence.
+
+## Phase 4 exit criteria and pending live evidence
+
+1. Demo and project clients reuse transport without mixing API keys, cookies, or Bearer tokens.
+2. Explicit key/project/env config fails safely when unavailable; no tutorial-key fallback.
+3. Wrapped create/read/PUT/delete scenarios and unique-name searches pass locally;
+   confirm project live behavior separately when the account is configured.
+4. Early tracking, including unexpected negative-create success, and failure-safe
+   owned cleanup have loopback regressions; no changed-owner deletion.
+5. 429 and Retry-After remain visible without automatic request replay or quota stress.
+6. Partial ReqRes schemas survive packaging; the reviewed OpenAPI basis and documented
+   auth/PATCH disagreements are maintained without a full-provider-validation claim.
+7. Quality CI, prior-service live compatibility, demo live outcome, and pending project
+   account/plan verification are recorded separately in validation.md.
+
+See [the Phase 4 plan](phase-4-test-plan.md) and [walkthrough](phase-4-walkthrough.md).

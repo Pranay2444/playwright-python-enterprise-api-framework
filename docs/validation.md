@@ -1,5 +1,63 @@
 # Validation records
 
+## Phase 4 — 2026-10-04
+
+Implemented version **0.4.0**: ReqRes demo/project clients, per-request API-key
+policy, explicit project/environment config, strict starter-product data, partial
+response schemas, reviewed OpenAPI excerpt, owned-record cleanup, and independent
+CI toggles. No new runtime/development dependency; Phase 2 pins remain unchanged.
+
+### Local verification
+
+| Check | Result |
+| --- | --- |
+| Editable 0.4.0 install | Passed |
+| Lint / formatting | Passed |
+| Deterministic suite with JUnit | **203 passed; 51 live cases deselected in 5.67 seconds** |
+| Allocation | 116 unit + 36 local HTTP + 32 DummyJSON + 10 Booker + 9 ReqRes |
+| New focused checks | **54 passed; 9 live versions deselected** |
+| New ReqRes allocation | 28 unit + 17 local HTTP + 4 demo + 5 project |
+| Collection | 254 cases, including 51 live versions |
+| Distribution build / installed-wheel probe | All three service validators and sdist schema assets passed |
+| Markdown file links / diff whitespace | Passed |
+
+Executed on Linux with Python **3.12.14**, Pytest **9.1.1**, Playwright **1.63.0**,
+jsonschema **4.26.0**, and Pydantic **2.13.5**. Tests cover API-key header/repr safety,
+target/config policy, strict generated data, nested schema failures, anonymous
+header isolation, cleanup after ordinary/schema failures and unexpected negative
+create success, changed owners, continued cleanup, redacted errors, and four-method
+429/Retry-After preservation without replay.
+
+### CI and live evidence
+
+Pending Phase 4 publication and configured runs. ReqRes demo and project remain
+separate jobs; collection/local execution is not live compatibility evidence.
+
+### Account and provider limitations
+
+No user-owned ReqRes key/project configuration is available in this session.
+The five project live cases are **not executed**. To verify, add the REQRES_API_KEY
+repository Secret and REQRES_PROJECT_ID Variable using the
+[Phase 4 walkthrough](phase-4-walkthrough.md), then enable the project live toggle.
+Selecting project live tests without config fails before HTTP; it is not a skip/pass.
+
+The newer LLM/landing references describe keyless demo access, while older docs
+and OpenAPI declarations differ. The guide mentions project PATCH but the reviewed
+spec does not; only PUT is implemented. See [the plan](phase-4-test-plan.md) for
+the dated source review and snapshot. Direct workspace retrieval of the spec/LLM
+JSON/pricing.md encountered HTTP errors; official web retrieval supplied the
+reviewed spec/reference. Machine-readable pricing was unavailable, so free quotas
+are advertised source claims, not measured account entitlements.
+
+No live quota exhaustion/enforcement, public-key RBAC, app-user sessions, full
+OpenAPI conformance, database erasure, production guarantee, UI, MFA, or retry
+scheduler is claimed. DELETE/GET 404 establishes default API absence; soft deletion
+and quota reclamation require separate provider/account evidence. Cleanup cannot
+be guaranteed after process termination, unusable IDs, ownership changes, or
+auth/network failures; GET-then-DELETE is not atomic.
+
+---
+
 ## Phase 3 — 2026-10-04
 
 Implemented version **0.3.0**: Restful Booker clients/settings/cookie session,

@@ -1,6 +1,6 @@
 # Response contracts and strict models
 
-Phases 2/3 separate three questions: did the endpoint return the expected HTTP
+Phases 2–4 separate three questions: did the endpoint return the expected HTTP
 envelope, is the JSON structurally compatible, and does the result make business
 sense? A response can pass its schema and still contain the wrong user's cart.
 
@@ -126,3 +126,25 @@ Use `json_array` plus `validate_contract` for the filtered ID array. Booker heal
 403, deletion, and absence responses are status-only checks because their bodies
 need not be JSON. Cleanup checks the JSON envelope and unique marker, independently
 of unrelated full-booking schema drift. See [the Phase 3 plan](phase-3-test-plan.md).
+
+## Phase 4: reviewed ReqRes contracts
+
+Pass `service="reqres"` to select `reqres.json`. The partial definitions cover demo
+user/list/detail/created responses and project record/list/error envelopes. Record
+responses nest fields under `data.data`; IDs are strings. Additive fields remain
+allowed. Dates/email formats are described in the provider excerpt but are not
+enforced by our validator; don't claim full OpenAPI or format validation.
+
+[The reviewed excerpt](reference/reqres-openapi-reviewed.json) records selected
+OpenAPI 3.0.3 paths/schemas from API version 2.1.0, reviewed 2026-10-04. It is not
+loaded at runtime. OpenAPI 3.0 schemas are not directly treated as Draft 2020-12;
+our small response rules are maintained explicitly and exercised with malformed
+nested unit inputs. Verify current docs/live behavior before extending the rules.
+
+`ProductRecordData` enforces our starter Products generator policy: nonempty name
+and category, finite/nonnegative price, strict boolean in_stock, and no extras.
+The generic provider record data schema allows objects; a typed factory does not
+prove every collection has those server validation rules. Negative wrapper tests
+use raw requests and register unexpected successful creation IDs before asserting.
+Cleanup checks marker ownership independently of unrelated metadata schema drift.
+Read [the Phase 4 plan](phase-4-test-plan.md) for auth/PATCH documentation conflicts.

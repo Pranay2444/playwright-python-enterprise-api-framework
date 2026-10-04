@@ -34,7 +34,14 @@ description: Plan and add tests in this Python Playwright API portfolio using ri
     Verify read-after-write and GET 404 after deletion. Finalize before contexts close.
     Prove cleanup under assertion/schema failure with loopback injection. Verify ownership
     before deleting; continue other tracked IDs and report failures without retries.
-11. Update the plan and report commands/results/limitations. Label security,
+11. For ReqRes, read [the Phase 4 plan](../../../docs/phase-4-test-plan.md).
+    Separate anonymous demo fixtures/simulated writes from project-key persistent records.
+    Use explicit project/env config and a user-owned manage key; never include it in URLs,
+    logs, or checked-in files. Wrap record POST/PUT data and discover returned string IDs.
+    Preserve synthetic names and track unexpected success in negative create tests.
+    Keep 429/Retry-After visible; test failures locally instead of exhausting public quotas.
+    Distinguish reviewed OpenAPI, conflicting docs, advertised limits, and live evidence.
+12. Update the plan and report commands/results/limitations. Label security,
     performance, MFA, or DB coverage as planned until it exists and has been executed.
 
 For DummyJSON, validate simulated cart-add responses without persistence claims.
