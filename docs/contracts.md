@@ -1,6 +1,6 @@
 # Response contracts and strict models
 
-Phase 2 separates three questions: did the endpoint return the expected HTTP
+Phases 2/3 separate three questions: did the endpoint return the expected HTTP
 envelope, is the JSON structurally compatible, and does the result make business
 sense? A response can pass its schema and still contain the wrong user's cart.
 
@@ -34,8 +34,8 @@ verification, an exhaustive OpenAPI validator, or JWT signature verification.
 ## Named response contracts
 
 `src/api_framework/contracts/dummyjson.json` contains local `$defs` references only.
-Validators load it through `importlib.resources`, check the schema, and cache one
-validator per name. No schema is fetched from a network during a test.
+Validators load assets through `importlib.resources`, check the schema, and cache one
+validator per service/name. No schema is fetched from a network during a test.
 
 | Name | Required fields/rules | Used by |
 | --- | --- | --- |
@@ -112,3 +112,17 @@ When a contract fails:
 Schema files are included in wheel and source distributions. Package validation
 must inspect the built assets and exercise a validator from an installed wheel;
 an editable-install pass alone cannot detect missing package data.
+
+## Phase 3 service extension
+
+`restful_booker.json` adds token, auth-error, booking, created-booking, and booking-ID
+array contracts. Pass `service="restful_booker"` to `contract_json` or
+`validate_contract`; existing DummyJSON calls retain the default. Unknown service
+names are rejected before file loading. Date patterns check ISO shape only; the
+strict booking factory validates real dates and checkout ordering. `additionalneeds`
+is optional in the response contract but asserted when our request includes it.
+
+Use `json_array` plus `validate_contract` for the filtered ID array. Booker health,
+403, deletion, and absence responses are status-only checks because their bodies
+need not be JSON. Cleanup checks the JSON envelope and unique marker, independently
+of unrelated full-booking schema drift. See [the Phase 3 plan](phase-3-test-plan.md).

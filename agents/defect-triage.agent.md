@@ -26,6 +26,10 @@ an autonomous process or authorize publishing an issue.
    For Phase 2, identify whether the failure is HTTP/envelope, JSON Schema,
    Pydantic input/view validation, or a business assertion. Compare the schema rule
    with docs/contracts.md and current provider evidence before changing a contract.
+   For Booker, check create-ID registration, unique marker preservation, public versus
+   cookie-authenticated client, and teardown ordering. Distinguish the original test
+   failure from any cleanup error. A reset or changed marker requires data/ownership
+   investigation; never delete the currently occupying resource to make teardown pass.
 6. List observations, competing hypotheses, and a discriminating next check.
    Mark RCA confirmed only when the evidence identifies the causal mechanism.
 7. Propose the smallest corrective action and a meaningful regression check. Rerun

@@ -11,6 +11,11 @@ on:
         required: true
         default: false
         type: boolean
+      run_live_booker:
+        description: Run the live Restful Booker lifecycle suite as well
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -57,10 +62,32 @@ jobs:
           cache-dependency-path: requirements-dev.txt
       - run: python -m pip install -r requirements-dev.txt
       - run: python -m pip install --no-deps -e .
-      - run: python -m pytest -m external --run-external --junitxml=reports/live-results.xml
+      - run: python -m pytest -m "external and not booker" --run-external --junitxml=reports/live-results.xml
       - uses: actions/upload-artifact@v7.0.1
         if: always()
         with:
           name: live-dummyjson-results
+          path: reports/*.xml
+          retention-days: 7
+
+  live-booker:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_live_booker
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m pip install --no-deps -e .
+      - run: python -m pytest -m "booker and external" --run-external --junitxml=reports/booker-results.xml
+      - uses: actions/upload-artifact@v7.0.1
+        if: always()
+        with:
+          name: live-booker-results
           path: reports/*.xml
           retention-days: 7

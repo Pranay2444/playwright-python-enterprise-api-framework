@@ -1,13 +1,14 @@
-# Testing strategy through Phase 2
+# Testing strategy through Phase 3
 
 ## Goal and scope
 
 Prove the framework is maintainable and that its clients can exercise the documented
-DummyJSON auth/product/user/cart flows. Distinguish framework defects from public
+DummyJSON auth/product/user/cart flows and Restful Booker persistent bookings. Distinguish framework defects from public
 service failures. Use a repeatable local base and a small live service suite.
 
-Phase 2 adds partial JSON Schema response contracts, strict Pydantic views/inputs,
-and negative/boundary checks. It excludes exhaustive OpenAPI/provider verification,
+Phases 2/3 add partial JSON Schema response contracts, strict Pydantic views/inputs,
+negative/boundary checks, a second auth style, and tracked persistent-resource cleanup.
+The current scope excludes exhaustive OpenAPI/provider verification,
 performance SLAs, RBAC, database verification, MFA, UI flows, and security fuzzing.
 
 ## Test pyramid
@@ -15,9 +16,9 @@ performance SLAs, RBAC, database verification, MFA, UI flows, and security fuzzi
 | Layer, from broad base upward | Checks | Why this layer |
 | --- | --- | --- |
 | Unit | Cache reuse, timed refresh, failure invalidation, independent managers, config validation, payload isolation, malformed schema/model inputs, diagnostic redaction | Fast feedback without driver/network dependencies |
-| Local HTTP integration | Real Playwright requests, cookie/Bearer isolation, query encoding, exposed HTTP errors, transport error redaction | Verify components work together without public-service availability |
-| Live API functional/contract/negative/boundary | 32 selected DummyJSON cases, including the eleven baseline scenarios | Confirm current real endpoint behavior and dynamic response chaining |
-| UI E2E | None through Phase 2 | Add only critical browser journeys when UI scope is introduced |
+| Local HTTP integration | Real Playwright requests, cookie/Bearer isolation, query encoding, exposed HTTP errors, transport error redaction, persistent CRUD wiring, cleanup failure injection | Verify components work together without public-service availability |
+| Live API functional/contract/negative/boundary | 32 DummyJSON + 10 Booker cases; seven synthetic bookings per Booker run | Confirm current real endpoint behavior and dynamic response chaining |
+| UI E2E | None through Phase 3 | Add only critical browser journeys when UI scope is introduced |
 
 Treat the pyramid as an allocation of feedback cost and risk, not a fixed percentage.
 Local functional scenarios exercise the same client/test code as live scenarios,
@@ -35,6 +36,8 @@ for integration verification against the real service.
 | HTTP wrapper hides service failures | Return 4xx/5xx without retries; assert status in tests | Explicit bounded retry policy for approved idempotent requests |
 | Simulated cart mistaken for persistence | Validate only the add response; document limitation | Persistent booking/local FastAPI CRUD lifecycle |
 | Secrets leak into diagnostics | No query/header/body logs; sanitized transport/schema exceptions; hidden model input errors; masked token/settings repr | Broader artifact redaction once richer reporting is introduced |
+| Persistent data survives failed assertions | Track IDs before contract checks; fixture teardown; owner checks; verify 404; visible cleanup failures | Owned-app atomic cleanup and durable resource ownership |
+| Cookie auth forced into Bearer lifecycle | Dedicated Booker session and anonymous client; no invented refresh | Additional auth adapters only when needed |
 | Public endpoint outage blocks all development | Deterministic CI and separate opt-in live job | Scheduled service checks after reliability/cost review |
 | Shape drift hidden by ad hoc assertions | Partial response schemas; strict typed views; malformed nested unit cases | Additional service-specific contracts |
 | Invalid data blocked before reaching a rejection test | Strict valid factories; raw dictionaries for server negatives | Owned-app validation matrices |
@@ -58,7 +61,7 @@ Refresh before the requested lifetime expires using an injectable monotonic cloc
 test timing without real sleeps. The server remains the authority on validity.
 Do not use this local timing policy as evidence that a JWT signature was verified.
 
-Do not replay business requests after 401, 429, 5xx, or transport failures in either implemented phase.
+Do not replay business requests after 401, 429, 5xx, or transport failures in the implemented phases.
 Disable automatic redirects/retries. Expose failures to the test and classify them
 using the defect agent. A refreshed token can be used by a subsequent explicit call.
 
@@ -106,3 +109,17 @@ agent instructions. Reproduce with the smallest test before changing the framewo
 
 See [the Phase 2 plan](phase-2-test-plan.md) for scenario/data/status mapping and
 [contract maintenance](contracts.md) for input policy versus provider behavior.
+
+## Phase 3 exit criteria
+
+1. Shared transport supports a second service without mixing tokens/config/fixtures.
+2. Create/read/PUT/PATCH/delete persist, and deletion is verified by GET 404.
+3. Public mutations touch only bookings created by that test; synthetic markers survive updates.
+4. Cleanup tracks IDs early, checks ownership, continues other resources on failure, and fails visibly.
+5. Loopback failure injection proves cleanup after test/schema failures and rejects ID reuse.
+6. The Booker schema survives distribution builds, and API/array checks remain redacted.
+7. Existing local/live coverage remains intact; each service has a distinct opt-in CI result.
+
+A shared demo reset is a data/environment possibility, not automatic proof of an
+application defect. Do not add retries or broaden cleanup to search/delete seed data.
+See [the Phase 3 plan](phase-3-test-plan.md) for cleanup limits and evidence.

@@ -8,7 +8,8 @@
 | `contracts/` | Typed product view and refresh response compatibility | Loopback or DummyJSON |
 | `negative/` | Thirteen invalid request cases with expected statuses/error shape | Loopback or DummyJSON |
 | `boundary/` | Six page/search/quantity cases with business relationships | Loopback or DummyJSON |
-| `support/` | A small in-process HTTP test double | Listens on a random loopback port |
+| `booker/` | Ten persistent lifecycle/auth/filter/boundary cases with isolated fixtures | Loopback or Booker |
+| `support/` | Small per-service HTTP models and owned-booking tracker | Random loopback ports |
 
 The `settings` fixture generates `[local]` and `[live]` cases. `[live]` carries the
 `external` marker and is skipped unless `--run-external` is present. Local HTTP uses
@@ -18,6 +19,8 @@ The server is rebuilt for each test. It uses deliberately different IDs from pub
 examples, which helps catch hidden fixed-ID assumptions. It implements only behavior
 needed by this phase. Its responses are **not authoritative DummyJSON contracts**.
 Local tests can pass even if the public service changes; run live checks to detect that.
+Booker has its own `booker_settings` fixture so service targets do not form a
+DummyJSON × Booker Cartesian product.
 
 Fixture chain for an authenticated call:
 
@@ -37,6 +40,8 @@ Selection examples:
 python -m pytest tests/functional/test_products.py -m "not external"
 python -m pytest tests/functional/test_auth.py -m external --run-external
 python -m pytest -m "regression and not external"
+python -m pytest -m "booker and not external"
+python -m pytest -m "booker and external" --run-external
 python -m pytest --collect-only -q
 ```
 
@@ -47,3 +52,8 @@ with the discovered user's ID; do not require a fixed catalogue count.
 Each `[live]` cart-add case performs one documented simulated write. There is no
 load loop, fuzzing, or broad security probing. Read [the strategy](../docs/testing-strategy.md)
 before expanding external coverage.
+
+For persistent Booker data, read [the Phase 3 guide](../docs/phase-3-walkthrough.md).
+Keep the synthetic lastname marker unchanged during mutations. Never delete or
+update shared seed IDs. Eight loopback failure-injection checks validate cleanup,
+including early ID registration, ownership changes, failure continuation, and logs.

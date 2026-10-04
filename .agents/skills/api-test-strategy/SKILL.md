@@ -28,10 +28,16 @@ description: Plan and add tests in this Python Playwright API portfolio using ri
    unit tests to prove rejection. Avoid full snapshots and leaking validation inputs.
 9. Distinguish strict factory policy from service rules. Negative API tests must
    bypass the valid factory and use an anonymous context when testing missing auth.
-10. Update the plan and report commands/results/limitations. Label security,
+10. For persistent bookings, read [the Phase 3 plan](../../../docs/phase-3-test-plan.md).
+    Use independent Booker fixtures/session headers. Create synthetic data only;
+    register returned IDs before response assertions; keep the lastname marker unchanged.
+    Verify read-after-write and GET 404 after deletion. Finalize before contexts close.
+    Prove cleanup under assertion/schema failure with loopback injection. Verify ownership
+    before deleting; continue other tracked IDs and report failures without retries.
+11. Update the plan and report commands/results/limitations. Label security,
     performance, MFA, or DB coverage as planned until it exists and has been executed.
 
-For both implemented phases, validate simulated cart-add responses without persistence claims.
+For DummyJSON, validate simulated cart-add responses without persistence claims.
 Keep login tokens in memory, per test. Preserve HTTP failures and avoid automatic
 business-request replay. Route failures to `agents/defect-triage.agent.md` at the
 repository root; do not hide them with skips or retries.

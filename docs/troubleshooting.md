@@ -17,6 +17,11 @@
 | Pydantic rejects a numeric string or boolean | Strict request/view policy | Fix generated data; keep raw invalid dicts only in negative tests |
 | Unknown contract name | Checked-in `$defs` names | Correct the name; this is configuration, not a product defect |
 | Missing schema after wheel install | Package data and build artifact | Rebuild with contracts/*.json included; verify the installed resource |
+| Booker create/delete status differs from REST assumptions | Provider-specific documented statuses | Assert create 200 and delete 201; verify using the Phase 3 plan |
+| Booker writes return 403 | Cookie session, credentials, public/authenticated client | Use the Booker session for owned mutations; do not inject a DummyJSON Bearer token |
+| Booking disappears during a live test | Shared demo reset or competing writes | Preserve failed evidence; check the target/time; do not hide with retries |
+| Cleanup reports changed owner marker | ID reuse or a test changed lastname | Withhold deletion; inspect ownership and mutation code |
+| Cleanup fails after a test passes/fails | Separate teardown outcome | Preserve both results; check safe GET/DELETE statuses; do not swallow errors |
 
 Start a failure investigation with the smallest failing node:
 

@@ -1,11 +1,12 @@
 # Playwright Python Enterprise API Framework
 
-**Phase 2: readable API automation with response contracts, negative tests, and boundary coverage.**
+**Phase 3: a multi-service API framework with persistent booking lifecycle tests and failure-safe cleanup.**
 
 This project uses **Python + Pytest + Playwright APIRequestContext** to test the
-DummyJSON e-commerce API. It starts small: transport, configuration, authentication,
-product discovery, users, and carts. Each layer has one responsibility, so adding a
-second service later does not require rewriting the HTTP client or test runner.
+DummyJSON e-commerce API and the Restful Booker booking API. Shared transport,
+configuration rules, and response validation support separate service adapters.
+DummyJSON covers discovery and simulated carts; Booker adds persistent CRUD within
+the lifetime of its shared demo dataset.
 
 The word "enterprise" describes the direction of this learning project. This is
 not a finished production framework. The capability table below separates working
@@ -17,7 +18,8 @@ features from the roadmap.
 2. Run the deterministic suite: `python -m pytest -m "not external"`.
 3. Read [the Phase 1 walkthrough](docs/phase-1-walkthrough.md) while opening the code.
 4. Continue with [the Phase 2 walkthrough](docs/phase-2-walkthrough.md) for contracts and negative testing.
-5. Run live DummyJSON checks explicitly when network access is available.
+5. Follow [the Phase 3 walkthrough](docs/phase-3-walkthrough.md) for booking lifecycle and cleanup.
+6. Run either live service suite explicitly when network access is available.
 
 ## What is implemented
 
@@ -27,10 +29,13 @@ features from the roadmap.
 | Configuration | Validated settings, `.env.example`, environment override precedence |
 | Authentication | Login, Bearer header injection, explicit refresh, token invalidation |
 | Token caching | One `TokenManager` per test, proactive refresh with a 30-second margin |
-| Domain clients | `AuthClient`, `ProductsClient`, `UsersClient`, `CartsClient` |
+| Domain clients | DummyJSON auth/products/users/carts and Restful Booker auth/bookings |
+| Persistent lifecycle | Create → read → PUT → read → PATCH → read → delete → 404 |
+| Booker authentication | Per-test token cookie attached only by the Booker mutation client; separate login context |
+| Cleanup | Register created IDs before schema assertions; verify owner marker; delete and confirm absence; report failures |
 | Dynamic data | Product IDs from catalogue responses; user IDs from auth/cart responses |
-| Data factory | Fresh cart payloads; no mutable shared payloads |
-| Response contracts | Packaged JSON Schema Draft 2020-12 contracts for products, users, tokens, carts, pages, and errors |
+| Data factories | Fresh carts and synthetic bookings with unique markers and validated date order |
+| Response contracts | Packaged JSON Schema Draft 2020-12 contracts for both services, including booking/ID-array shapes |
 | Typed validation | Strict Pydantic product views and cart input models; no numeric-string coercion |
 | Assertions | HTTP status, exact JSON media type, schema structure, and business relationships |
 | Negative coverage | Missing/invalid credentials and tokens, invalid IDs, malformed cart lists, unsupported method |
@@ -39,7 +44,7 @@ features from the roadmap.
 | Diagnostics | Method, endpoint path, status, and elapsed time; no payload/header logging |
 | Repeatable checks | Unit tests plus local HTTP checks using the real Playwright driver |
 | Public service checks | The same functional scenarios have an opt-in live target |
-| CI | Python 3.11/3.12/3.13 quality jobs; manually enabled live job; JUnit artifacts |
+| CI | Python 3.11/3.12/3.13 quality jobs; separate opt-in DummyJSON and Booker jobs; JUnit artifacts |
 | AI-assisted workflow | Repository instructions, testing skill, defect triage/RCA guide |
 
 **Important DummyJSON behavior:** cart additions return simulated results and are
@@ -54,7 +59,7 @@ flowchart TD
     T["Pytest tests"] --> D["Domain clients"]
     D --> A["ApiClient"]
     A --> P["Playwright request context"]
-    P --> S["Local HTTP or DummyJSON"]
+    P --> S["Local HTTP or public API"]
     A --> M["TokenManager when authenticated"]
     M --> C["AuthClient on separate context"]
     C --> P
@@ -62,7 +67,10 @@ flowchart TD
 
 The `AuthClient` uses an unauthenticated `ApiClient`. This prevents token acquisition
 from recursively trying to acquire a token. Domain methods return `APIResponse`,
-so tests can assert an error response as easily as a successful response.
+so tests can assert an error response as easily as a successful response. The
+TokenManager branch above applies to DummyJSON. Booker has no refresh endpoint;
+its adapter sends `Cookie: token=...` for PUT/PATCH/DELETE and reuses the same core
+transport without pretending that cookie authentication is a Bearer-token lifecycle.
 
 | Location | Responsibility |
 | --- | --- |
@@ -72,6 +80,12 @@ so tests can assert an error response as easily as a successful response.
 | `src/api_framework/contracts/` | Checked-in schemas, safe contract diagnostics, strict Pydantic models |
 | `src/api_framework/auth/token_manager.py` | Cache, refresh, and invalidate tokens |
 | `src/api_framework/clients/dummyjson/` | DummyJSON endpoint paths and payload details |
+| `src/api_framework/clients/restful_booker/` | Booker login/session and booking CRUD methods |
+| `src/api_framework/data/booking_factory.py` | Strict synthetic booking payloads and ISO date serialization |
+| `tests/booker/conftest.py` | Independent targets, contexts, auth, and lifecycle tracker fixture |
+| `tests/booker/test_bookings.py` | Persistent workflow, filtering, PATCH boundaries, auth rejection |
+| `tests/support/booking_lifecycle.py` | Test-owned resource tracking and visible cleanup |
+| `tests/support/local_booker.py` | Small persistent loopback HTTP model |
 | `src/api_framework/data/cart_factory.py` | Create independent cart payloads |
 | `tests/conftest.py` | Create, connect, and dispose fixtures |
 | `tests/functional/` | Functional scenarios, each run against local or live targets |
@@ -105,7 +119,7 @@ python -m pytest -m "not external"
 available to tests. It avoids custom `sys.path` changes and `PYTHONPATH` workarounds.
 
 `cp .env.example .env` makes a local copy of the documented settings. Keep `.env`
-out of Git. The demo credentials in `.env.example` are published by DummyJSON;
+out of Git. The demo credentials in `.env.example` are published by the two demo providers;
 replace them only with credentials suitable for the target environment.
 
 **No browser installation is needed for this API-only phase.** The Playwright Python
@@ -126,7 +140,11 @@ Windows PowerShell: create the venv with `py -3 -m venv .venv`, activate with
 | Local contract checks | `python -m pytest -m "contract and not external"` |
 | Local rejected requests | `python -m pytest -m "negative and not external"` |
 | Local boundary checks | `python -m pytest -m "boundary and not external"` |
-| Live DummyJSON only | `python -m pytest -m external --run-external` |
+| Live DummyJSON only | `python -m pytest -m "external and not booker" --run-external` |
+| Local Booker only | `python -m pytest -m "booker and not external"` |
+| Live Booker only | `python -m pytest -m "booker and external" --run-external` |
+| All live services | `python -m pytest -m external --run-external` |
+| Cleanup fault injection | `python -m pytest tests/local/test_booking_cleanup.py` |
 | Live smoke only | `python -m pytest -m "smoke and external" --run-external` |
 | Both targets plus framework checks | `python -m pytest --run-external` |
 | Cart workflow locally | `python -m pytest -m "workflow and not external"` |
@@ -197,6 +215,43 @@ protections do not make `--showlocals`, raw exceptions, or body dumps safe to sh
 See [contract maintenance](docs/contracts.md) and the
 [Phase 2 test plan](docs/phase-2-test-plan.md) for the rationale and scope.
 
+## Phase 3: persistent booking lifecycle
+
+Restful Booker is the second service adapter. It reuses `ApiClient` and the contract
+validator with `service="restful_booker"`, while keeping its config, cookie session,
+fixtures, and resource lifecycle independent from DummyJSON.
+
+| Operation / case | Expected behavior |
+| --- | --- |
+| `GET /ping` | 201; a status response rather than a JSON object |
+| Valid `POST /auth` | 200 with token; no refresh mechanism |
+| Invalid credentials | 200 with `reason: Bad credentials`; absence of token |
+| `POST /booking` | 200 with a returned booking ID and booking object |
+| `GET /booking/{created_id}` | 200; persisted fields match the synthetic input |
+| Filter by created firstname/unique lastname | 200 array; contains our returned ID |
+| Authenticated PUT | 200; replacement fields persist on a separate GET |
+| Authenticated PATCH | 200; changed fields persist and untouched fields remain |
+| PATCH `totalprice=0`, `depositpaid=false` | Values persist without truthiness mistakes |
+| Anonymous PUT/PATCH/DELETE or invalid-cookie PATCH | 403; our booking remains unchanged |
+| Authenticated DELETE | 201; later GET returns 404 |
+
+The `booking_tracker` fixture authenticates before creating data. `create()` records
+a usable response ID **before** status/schema assertions, then teardown runs before
+request contexts close. Each booking has a synthetic `QA-<UUID>` lastname marker.
+Cleanup reads the tracked ID, checks that marker, deletes it, and verifies 404.
+Already-absent IDs are accepted in teardown; changed markers stop deletion and fail
+cleanup. Cleanup tries every tracked ID and reports failures without retries.
+
+The shared demo resets periodically and other users can write to it. Marker checks
+reduce ID-reuse risk; they cannot make GET-then-DELETE atomic. Never mutate seed
+bookings, infer tenant isolation, or claim permanent durability. If creation does
+not return a usable ID, cleanup cannot safely infer which resource was created.
+Only synthetic data is sent. The live suite creates seven small bookings per run.
+
+Read [the Phase 3 test plan](docs/phase-3-test-plan.md) and
+[walkthrough](docs/phase-3-walkthrough.md) for fixture ordering, cleanup failures,
+source-backed status conventions, practice exercises, and interview explanations.
+
 ## Authentication decisions
 
 - `TokenManager` receives a `TokenSource` protocol, so a future service can provide
@@ -220,12 +275,12 @@ Use the [testing strategy](docs/testing-strategy.md) for the test pyramid, risks
 data isolation, and quality gates. For this phase, the broad base is framework unit
 checks, including deliberately invalid contracts/models, followed by local HTTP integration checks.
 A smaller live suite confirms
-real e-commerce API behavior. This repository has no UI tests yet.
+real behavior of each public API. This repository has no UI tests yet.
 
 The workflow runs lint, formatting, distribution builds, and local tests on pushes to `main` and pull
 requests. A failure blocks that job. To run live tests in GitHub Actions, choose
-**Actions → API framework quality → Run workflow → Run the live DummyJSON suite**.
-The live job runs after quality succeeds, uses Python 3.12, and remains a separate
+**Actions → API framework quality → Run workflow** and enable DummyJSON, Booker,
+or both. Each live job runs after quality succeeds, uses Python 3.12, and remains a separate
 signal from the deterministic checks. Workflow configuration alone does not enable
 branch protection; the repository owner must configure required checks if desired.
 
@@ -278,7 +333,7 @@ future services.
 | --- | --- | --- |
 | 1 | Core transport, DummyJSON auth/products/users/carts, CI, learning docs | Implemented |
 | 2 | JSON Schema/Pydantic, contract checks, negative and boundary tests | Implemented |
-| 3 | Restful Booker persistent booking create/read/update/patch/delete lifecycle | Planned |
+| 3 | Restful Booker persistent booking create/read/update/patch/delete lifecycle | Implemented |
 | 4 | ReqRes adapter; verify current API-key, persistence, and plan requirements first | Planned |
 | 5 | Owned FastAPI app, JWT, PostgreSQL, Mailpit, MFA, file workflows | Planned |
 | Later | Local security/failure injection, Schemathesis/Hypothesis, Docker, richer reporting | Planned |
@@ -289,9 +344,10 @@ local environment. Those capabilities remain future work.
 
 ## Validation and sources
 
-[Validation notes](docs/validation.md) record **102 deterministic tests** and
-**32 live DummyJSON tests** passing, with CI evidence on Python 3.11/3.12/3.13
-for the deterministic suite. Live compatibility is a point-in-time result.
+[Validation notes](docs/validation.md) keep Phase 1/2 evidence and the Phase 3
+execution record separate. Phase 3 has **149 deterministic cases** and **42 live
+versions**: 32 DummyJSON and 10 Booker. See the record for executed outcomes and
+CI links; collection alone is not a live compatibility pass.
 Official references used for this phase:
 
 - [Playwright Python API testing](https://playwright.dev/python/docs/api-testing)
@@ -304,10 +360,14 @@ Official references used for this phase:
 - [jsonschema validation](https://python-jsonschema.readthedocs.io/en/stable/validate/)
 - [Pydantic strict mode](https://docs.pydantic.dev/latest/concepts/strict_mode/)
 - [Phase 2 contract basis and maintenance policy](docs/contracts.md)
+- [Restful Booker API documentation](https://restful-booker.herokuapp.com/apidoc/index.html)
+- [Phase 3 provider basis and cleanup policy](docs/phase-3-test-plan.md)
 
 **Portfolio explanation:** "I built a layered Python API automation foundation using
 Playwright and Pytest. It separates HTTP transport, service clients, token handling,
 fixtures, and assertions. Phase 1 covers DummyJSON e-commerce APIs with dynamic data,
 isolated authentication, repeatable local checks, and optional live verification.
 Phase 2 adds partial JSON Schema response contracts, strict Pydantic models, and
-negative/boundary cases while distinguishing framework policy from provider behavior."
+negative/boundary cases while distinguishing framework policy from provider behavior.
+Phase 3 reuses the core for a second auth style and persistent booking lifecycle,
+with owned-resource tracking and tested cleanup after failures."

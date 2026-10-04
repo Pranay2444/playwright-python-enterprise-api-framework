@@ -1,5 +1,45 @@
 # Validation records
 
+## Phase 3 — 2026-10-04
+
+Implemented version **0.3.0**: Restful Booker clients/settings/cookie session,
+synthetic booking factory, service-specific schemas, persistent lifecycle scenarios,
+and ownership-aware cleanup with loopback failure injection. Dependency pins remain
+unchanged from Phase 2; no new runtime dependency is required.
+
+### Local verification
+
+| Check | Result |
+| --- | --- |
+| Editable 0.3.0 install | Passed |
+| Lint and formatting | Passed |
+| Deterministic suite with JUnit | **149 passed; 42 live cases deselected** |
+| Allocation | 88 unit + 19 local HTTP framework/cleanup + 32 local DummyJSON + 10 local Booker |
+| New cleanup regressions | 8 passed, including malformed persisted response and changed owner |
+| Total collection | 191 cases |
+| Distribution build and installed-wheel schemas | Passed for both services; both assets in sdist |
+| Documentation file links / diff whitespace | Passed |
+
+Executed on Linux with Python **3.12.14**, Pytest **9.1.1**, Playwright **1.63.0**,
+jsonschema **4.26.0**, and Pydantic **2.13.5**. The Booker loopback target is a small
+persistent model, not evidence of deployed service compatibility.
+
+### CI and live evidence
+
+Pending Phase 3 publication and explicit live jobs. Booker and DummyJSON use
+separate jobs/reports; live collection is not a pass.
+
+### Limits
+
+Booker data persists within the shared demo dataset lifetime, which resets. Tests
+use synthetic data and track returned IDs; teardown checks markers and GET 404.
+GET-then-DELETE is not atomic. A changed marker, network/auth failure, unusable
+creation ID, or process termination prevents guaranteed cleanup. Failures are
+reported without retries or broad search/delete. No permanent durability, Basic-auth
+coverage, production RBAC, database, MFA, UI, or performance claim is made.
+
+---
+
 ## Phase 2 — 2026-10-04
 
 Implemented version **0.2.0**: partial response schemas, strict Pydantic product/cart
@@ -127,4 +167,4 @@ live run.
 - The live result is a point-in-time compatibility check, not an uptime guarantee.
 - Local responses are a minimal test double, not verified full DummyJSON contracts.
 - Phase 1 did not include JWT cryptographic validation, schema validation, security audit, load test, UI,
-  database, MFA, persistent cart, or process-parallel execution is claimed.
+  database, MFA, persistent cart, or process-parallel execution.

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "playwright-python-enterprise-api-framework"
-version = "0.2.0"
+version = "0.3.0"
 description = "An incremental Playwright Python API testing portfolio, starting with DummyJSON."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -39,6 +39,7 @@ markers = [
   "contract: response schema or typed model compatibility",
   "negative: invalid requests and authentication rejection",
   "boundary: pagination, empty results, and minimum valid quantity",
+  "booker: Restful Booker persistent booking scenarios",
 ]
 
 [tool.ruff]

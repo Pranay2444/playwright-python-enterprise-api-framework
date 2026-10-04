@@ -4,7 +4,7 @@
 | --- | --- | --- |
 | 1 | Core transport, config, auth/token lifecycle, DummyJSON clients, dynamic data, local/live tests, CI | Local checks and package build pass; live state recorded honestly |
 | 2 — implemented | JSON Schema response validators and strict Pydantic views/inputs; negative credentials/auth; invalid IDs/method; boundaries | Validator fault injection, local/live target cases, safe diagnostics, packaged schema, documented status expectations |
-| 3 | Restful Booker adapter and lifecycle fixtures | Create → get → put → patch → delete; verify deletion; robust cleanup of created booking |
+| 3 — implemented | Restful Booker adapter, isolated cookie session, lifecycle fixtures, ownership checks | Create → get → put → patch → delete; verify deletion; robust cleanup of created booking |
 | 4 | ReqRes adapter after checking current official key/account/plan rules | A different auth style works through shared transport; persistence/rate rules verified for chosen plan |
 | 5 | Owned FastAPI e-commerce/test app and Docker setup | Persistent API flows, PostgreSQL checks, controlled auth and failure injection |
 | 6 | Mailpit/email OTP, TOTP, mock SMS, file upload/download | Correlated OTP retrieval, deterministic clock handling, checksum/file metadata validation |

@@ -1,6 +1,6 @@
 # Repository instructions for coding assistants
 
-This is a Phase 2 Python Playwright API automation learning/portfolio project.
+This is a Phase 3 Python Playwright API automation learning/portfolio project.
 Read README.md and docs/validation.md before describing its capabilities.
 
 ## Change approach
@@ -20,6 +20,12 @@ Read README.md and docs/validation.md before describing its capabilities.
 - Allow additive response fields. Keep JSON Schema and typed product constraints aligned.
 - Use strict Pydantic models for valid generated inputs, raw dicts for negative API tests.
 - Separate our positive-quantity input policy from DummyJSON's permissive validation.
+- Keep Booker cookie sessions separate from DummyJSON's TokenManager; no invented refresh.
+- Use `booking_tracker` for persistent Booker creations. Register IDs before schema
+  assertions, preserve the unique synthetic lastname marker, and finalize before contexts close.
+- Never mutate/delete shared seed bookings or enumerate the shared dataset for cleanup.
+- Cleanup must verify ownership and absence, attempt other tracked IDs after failure,
+  and surface failures. Do not add retries or treat a changed marker as successful cleanup.
 - Never include jsonschema error messages/instances or Pydantic `.errors()` input values
   in shared diagnostics; read docs/contracts.md before extending validation.
 
@@ -50,5 +56,8 @@ template. Do not publish issues/comments or message people unless asked to do so
 - Public product/user/cart endpoints are not authorization enforcement evidence.
 - Token expiry here is a requested-duration scheduling hint, not JWT verification.
 - Partial response contracts and negative/boundary tests are implemented in Phase 2.
+- Persistent booking lifecycle, independent auth, and owned-resource cleanup exist in Phase 3.
+- Booker uses 200 create/read/PUT/PATCH, 201 delete/ping, and 403 anonymous writes.
+- Its shared demo resets periodically: check ownership before deleting; GET/DELETE is not atomic.
 - Security fuzzing, MFA, DB checks, and UI are future phases.
 - The synchronous `TokenManager` is not thread-safe. Do not share it across threads.

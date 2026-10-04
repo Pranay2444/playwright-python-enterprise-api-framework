@@ -13,7 +13,7 @@ folder or adding the source directory to `sys.path`.
 | Data factories | Fresh payload structure | Shared mutable dictionaries |
 | Contracts | Partial service schemas, strict typed views/inputs, safe diagnostics | HTTP calls, Pytest fixtures, business workflow assertions |
 
-`AuthClient` is the one adapter that parses tokens for `TokenManager`; its public
+The DummyJSON `AuthClient` adapter parses tokens for `TokenManager`; its public
 `login`, `me`, and `refresh` methods still expose raw responses for testing.
 The `json_object` helper checks the HTTP/JSON envelope. `contract_json` builds on
 it using a packaged Draft 2020-12 schema. Both return the original dict, so business
@@ -22,7 +22,7 @@ assertions remain visible in tests. See [contract maintenance](../docs/contracts
 To add a new endpoint:
 
 1. Confirm its current official contract.
-2. Add a short method to the appropriate DummyJSON client.
+2. Add a short method to the appropriate service client.
 3. Return `APIResponse`; keep business assertions in the test.
 4. Use fixtures or earlier API calls to discover IDs.
 5. Add the local test-double behavior needed to verify transport/wiring, then run
@@ -39,6 +39,11 @@ fixtures, and its real integration tests. Reuse `ApiClient`. Implement `TokenSou
 only if that service uses a compatible obtain/renew token lifecycle; do not pretend
 an API key or cookie token has the same behavior without designing an adapter.
 
-PUT/PATCH/DELETE, richer auth providers, and retry policies are intentionally future
-work. `ApiClient.request(method, ...)` can already send another method if a real
-Phase 2/3 test requires it. Avoid speculative wrapper methods with no users.
+Phase 3 implements Booker PUT/PATCH/DELETE through `ApiClient.request`. Cookie
+session headers stay in `clients/restful_booker/`, and no refresh is invented.
+The contract registry selects checked-in files by an allowed service name; existing
+DummyJSON calls keep their default. `json_array` supports filtered booking ID lists.
+Test resource lifecycle/cleanup stays under `tests/support`, not in transport.
+
+Richer auth providers and retry policies remain future work. Avoid speculative
+wrapper methods with no users.
