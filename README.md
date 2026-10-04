@@ -345,9 +345,11 @@ local environment. Those capabilities remain future work.
 ## Validation and sources
 
 [Validation notes](docs/validation.md) keep Phase 1/2 evidence and the Phase 3
-execution record separate. Phase 3 has **149 deterministic cases** and **42 live
-versions**: 32 DummyJSON and 10 Booker. See the record for executed outcomes and
-CI links; collection alone is not a live compatibility pass.
+execution record separate. Phase 3 passed **149 deterministic tests** locally and
+on Python **3.11/3.12/3.13** in CI. The
+[explicit live run](https://github.com/Pranay2444/playwright-python-enterprise-api-framework/actions/runs/37204906955)
+passed **32 DummyJSON + 10 Booker cases**, including booking cleanup without
+teardown errors. These are point-in-time results against shared public demos.
 Official references used for this phase:
 
 - [Playwright Python API testing](https://playwright.dev/python/docs/api-testing)

@@ -26,8 +26,35 @@ persistent model, not evidence of deployed service compatibility.
 
 ### CI and live evidence
 
-Pending Phase 3 publication and explicit live jobs. Booker and DummyJSON use
-separate jobs/reports; live collection is not a pass.
+Phase 3 source was published on `main` in commit `ece1927`.
+
+The [push quality run](https://github.com/Pranay2444/playwright-python-enterprise-api-framework/actions/runs/37204784710)
+passed on Python **3.11, 3.12, and 3.13**, including lint, formatting, distribution
+builds, and **149 deterministic tests per matrix job**.
+
+The [explicit live run](https://github.com/Pranay2444/playwright-python-enterprise-api-framework/actions/runs/37204906955)
+passed all three quality jobs and both independent live jobs on Python **3.12.14**:
+
+| Job | Executed outcome |
+| --- | --- |
+| `live-booker` | **10 passed; 181 deselected in 8.70 seconds** |
+| `live-dummyjson` | **32 passed; 159 deselected in 5.98 seconds** |
+
+Booker confirmed reviewed statuses, cookie-authenticated PUT/PATCH/DELETE, separate
+GET persistence checks, exact-name filtering, zero/false PATCH values, and unchanged
+bookings after rejected writes. Seven synthetic bookings were created; the lifecycle
+case deleted its own booking and teardown verified absence for all tracked IDs.
+No cleanup errors were reported. This is evidence at execution time, not permanent
+durability or a guarantee against shared-demo resets.
+
+DummyJSON's 32 existing live cases remained compatible with the shared response
+and contract changes. All five JUnit artifacts were uploaded successfully, with
+seven-day retention. Public execution used GitHub Actions; the local model remains
+separate evidence.
+
+A later documentation-only commit records these results without changing Python
+source, schemas, dependency pins, or workflow configuration. Its push quality gate
+validates the maintained repository state separately.
 
 ### Limits
 
