@@ -27,10 +27,27 @@ existing/created cart discount fields, and value-free displayed diagnostics.
 
 ### GitHub Actions / live verification
 
-CI and live results are pending the Phase 2 publish and execution. Public DummyJSON
-execution uses the explicit GitHub Actions live job because this workspace previously
-could not reach the service reliably. Do not interpret local model passes as live
-compatibility evidence.
+Phase 2 source was published on `main` in commit `6335f0c`.
+
+The [push quality run](https://github.com/Pranay2444/playwright-python-enterprise-api-framework/actions/runs/37202412843)
+passed on Python **3.11, 3.12, and 3.13**, including lint, formatting, distribution
+builds, and **102 deterministic tests per matrix job**.
+
+The [explicit live run](https://github.com/Pranay2444/playwright-python-enterprise-api-framework/actions/runs/37202520073)
+passed all three quality jobs and `live-dummyjson`. The live job used Python
+**3.12.14** and reported **32 passed; 102 local cases deselected in 6.81 seconds**.
+Its 32 cases include 11 baseline functional scenarios with schemas, 2 typed/refresh
+contract scenarios, 13 negative cases, and 6 boundary/arithmetic cases. JUnit XML
+artifacts were uploaded successfully; their configured retention is seven days.
+
+This confirms the deployed service's reviewed statuses, both cart discount-field
+shapes, and boundary semantics at execution time. It is not an uptime guarantee.
+Public DummyJSON execution used GitHub Actions because this workspace previously
+could not reach the service reliably. Local model passes remain separate evidence.
+
+A later documentation-only commit records these results without changing Python
+source, schema files, dependency pins, or workflow configuration. The final push
+workflow validates that maintained repository state separately.
 
 ### Phase 2 limitations
 

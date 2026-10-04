@@ -289,8 +289,10 @@ local environment. Those capabilities remain future work.
 
 ## Validation and sources
 
-[Validation notes](docs/validation.md) distinguish executed local checks from
-unverified live-service behavior. Official references used for this phase:
+[Validation notes](docs/validation.md) record **102 deterministic tests** and
+**32 live DummyJSON tests** passing, with CI evidence on Python 3.11/3.12/3.13
+for the deterministic suite. Live compatibility is a point-in-time result.
+Official references used for this phase:
 
 - [Playwright Python API testing](https://playwright.dev/python/docs/api-testing)
 - [APIRequestContext reference](https://playwright.dev/python/docs/api/class-apirequestcontext)
