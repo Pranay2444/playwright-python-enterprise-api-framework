@@ -1,25 +1,27 @@
-# Incremental roadmap
+# Five-phase portfolio roadmap
 
-| Phase | Add only when starting that phase | Exit evidence |
+The user's final Phase 5 combines the former roadmap's Phases 5–8 core into one
+maintainable owned lab release. No separate Phase 6–8 implementation is required.
+
+| Phase | Implemented capability | Exit evidence |
 | --- | --- | --- |
-| 1 | Core transport, config, auth/token lifecycle, DummyJSON clients, dynamic data, local/live tests, CI | Local checks and package build pass; live state recorded honestly |
-| 2 — implemented | JSON Schema response validators and strict Pydantic views/inputs; negative credentials/auth; invalid IDs/method; boundaries | Validator fault injection, local/live target cases, safe diagnostics, packaged schema, documented status expectations |
-| 3 — implemented | Restful Booker adapter, isolated cookie session, lifecycle fixtures, ownership checks | Create → get → put → patch → delete; verify deletion; robust cleanup of created booking |
-| 4 — implemented | ReqRes demo/project adapter, API keys, wrapped data, reviewed contracts, owned cleanup, local 429 checks | Local/package/CI proof; project live persistence and account quotas remain pending until credentials are configured and executed |
-| 5 | Owned FastAPI e-commerce/test app and Docker setup | Persistent API flows, PostgreSQL checks, controlled auth and failure injection |
-| 6 | Mailpit/email OTP, TOTP, mock SMS, file upload/download | Correlated OTP retrieval, deterministic clock handling, checksum/file metadata validation |
-| 7 | Owned-environment security/property/contract fuzzing | RBAC/cross-user/expiry/rate-limit cases; controlled Schemathesis/Hypothesis findings |
-| 8 | Process parallelism and richer reports | Isolated workers/resources, safe attachments, stable CI artifacts |
+| 1 | Core transport/config, DummyJSON clients, scoped token lifecycle, dynamic data, CI | Local/package and point-in-time live results |
+| 2 | Partial JSON Schema, strict Pydantic, negative and boundary checks | Fault injection, packaged assets and local/live scenarios |
+| 3 | Booker adapter/cookies, persistent lifecycle and owned cleanup | CRUD/PATCH/GET absence, failure-safe cleanup and live evidence |
+| 4 | ReqRes demo/project clients, API keys, contracts, records, local429 checks | Local/package/CI and demo live; five private project cases pending account config |
+| 5 — final | Owned FastAPI/SQLAlchemy auth/document app, JWT/MFA, PostgreSQL/Mailpit/Docker, bounded security/Hypothesis, parallelism and domain reports | Full local/matrix/wheel checks, actual PG/SMTP/container CI, comprehensive layer/auth/triage docs |
 
-Do not scaffold every provider or service before its first concrete test. Keep core
-changes driven by real usage. For example, add a retry policy only alongside tests
-that establish which methods can be retried, how many times, how `Retry-After` is
-interpreted, and how failures remain visible.
+See [validation](validation.md) for executed outcomes and limitations, and the
+[Phase 5 plan](phase-5-test-plan.md) for risk-to-scenario mapping. Code and workflow
+configuration do not substitute for an executed result.
 
-The test pyramid should remain broad at the inexpensive layers. Add browser E2E
-only for a few critical user journeys if UI scope is introduced; do not copy all API
-cases into UI tests.
+Optional extensions after the five-phase release include a few critical browser
+journeys, independently reviewed complete contracts, Schemathesis, performance
+benchmarks, migrations/retention, and production identity operations. These are
+unimplemented choices, not promises or current coverage. Real SMS is outside scope.
 
-Live/public service behavior and access requirements may change. Verify current
-official contracts when beginning each adapter. Roadmap entries are goals, not
-claims about current service plans or guarantees.
+Keep the test pyramid broad at inexpensive layers. Add only abstractions needed
+by a concrete scenario. A retry policy would need explicit method/attempt/failure
+semantics and dedicated evidence; this framework currently exposes failures without
+business replay. Security/property checks belong to owned environments, not public
+quota exhaustion. Recheck current official contracts before extending a public adapter.

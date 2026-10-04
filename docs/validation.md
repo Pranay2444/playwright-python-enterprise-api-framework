@@ -1,5 +1,70 @@
 # Validation records
 
+## Phase 5 — 2026-10-04
+
+Implemented version **0.5.0**, continuing the saved authentication-lab checkpoint
+rather than rebuilding earlier phases. This final phase combines the owned app,
+MFA/documents, bounded security/property tests, Docker integration and parallel
+reporting. Read [workflow/layers](phase-5-workflow.md), [auth policy](phase-5-auth.md),
+[execution walkthrough](phase-5-walkthrough.md), [test plan](phase-5-test-plan.md),
+and [domain defects/RCA](defect-management.md).
+
+### Local verification
+
+| Check | Executed result |
+| --- | --- |
+| Full deterministic suite / JUnit | **284 passed; 52 deselected in 31.69 seconds** |
+| Allocation | 147 unit + 36 local HTTP + 32 DummyJSON + 10 Booker + 9 ReqRes + 50 owned lab |
+| Two-worker owned lab | **50 passed in 14.34 seconds**, SQLite/captured delivery |
+| Focused reporting/concurrency/generated HTTP batch | **9 passed** before the final unexpected-failure case was added |
+| Ruff lint / formatting | Passed; 136 Python files formatted |
+| Wheel + sdist build | Passed |
+| Installed-wheel probe outside src | Both packages, three public schema assets, actual HTTP health/register/auth rejection passed |
+| Source archive contents | Compose/Docker/scripts/docs/schema assets present; no private keys, DBs or venv |
+| Markdown local file targets | 168 checked; remote URLs and anchors excluded |
+| Workflow/Compose/issue-form YAML | Parsed successfully; not a Docker execution substitute |
+| Signing-key initializer | 0600 file/0700 directory, repeat invocation preserves value, git ignored; no key output |
+| Diff whitespace | Passed |
+
+Local execution used Linux/Python **3.12.14**, Pytest **9.1.1** and Playwright
+**1.63.0**. Updated exact pins include FastAPI, SQLAlchemy, psycopg, Argon2/pwdlib,
+PyJWT, PyOTP, multipart, Hypothesis and xdist in `requirements-dev.txt`; lab app
+requirements remain an optional package extra. The 52 deselected cases are 51
+public live versions plus one explicitly opted-in container workflow.
+
+New coverage includes strict signature/claim/time checks, challenge/step/refresh
+replay, per-account attempt limits, fail-closed client/server failure handling,
+owner/tenant/member gates, persistence/checksum/deletion, uniqueness/CAS races,
+consistent login/verify lock order, bounded generated cases, Mailpit correlation,
+and safe reporting with original-failure preservation. Race tests are bounded
+regressions, not a performance/exhaustive-concurrency proof.
+
+### CI / real infrastructure execution
+
+Pending the Phase 5 push run. No Docker or PostgreSQL service exists in the local
+workspace. SQLite/captured delivery does not prove real PostgreSQL or SMTP.
+The owned CI job must actually build/start Compose, verify app PID1 UID10001,
+run the 50 owned tests using PostgreSQL and real SMTP/Mailpit with two workers,
+and run the installed app container workflow. Update this section only after
+inspecting executed jobs/logs/artifacts; workflow configuration alone is not evidence.
+
+### Limits retained
+
+The five private ReqRes project live cases remain unexecuted without the user's
+key/project configuration. Phase 4's **46 public live passes** remain historical
+point-in-time evidence; no new provider live run is implied by the Phase 5 local
+suite. No credentials, real SMS recipients, defect issues or messages are created.
+
+This is an owned disposable auth/document lab. TOTP enrollment/storage is
+simplified; SMS is simulated; files are bounded UTF-8 text in the DB. No production
+identity guarantee, full OpenAPI verification, UI, malware scanner, distributed
+rate limiter, migration/retention worker, exhaustive fuzzing or load SLA is claimed.
+Receipts are allowlisted metadata; JUnit/custom assertions still need review before
+sharing. Expired sessions/refresh history and synthetic container accounts remain
+until disposable database reset. See the auth/workflow guides for exact semantics.
+
+---
+
 ## Phase 4 — 2026-10-04
 
 Implemented version **0.4.0**: ReqRes demo/project clients, per-request API-key

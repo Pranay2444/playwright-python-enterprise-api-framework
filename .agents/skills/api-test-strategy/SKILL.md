@@ -41,8 +41,22 @@ description: Plan and add tests in this Python Playwright API portfolio using ri
     Preserve synthetic names and track unexpected success in negative create tests.
     Keep 429/Retry-After visible; test failures locally instead of exhausting public quotas.
     Distinguish reviewed OpenAPI, conflicting docs, advertised limits, and live evidence.
-12. Update the plan and report commands/results/limitations. Label security,
-    performance, MFA, or DB coverage as planned until it exists and has been executed.
+12. For the owned lab, read [workflow](../../../docs/phase-5-workflow.md),
+    [authentication](../../../docs/phase-5-auth.md) and [the Phase 5 plan](../../../docs/phase-5-test-plan.md).
+    Choose unit policy, actual HTTP composition, PostgreSQL/SMTP integration or installed
+    container checks by risk. Inject clock/delivery through the app factory only;
+    no OTP/time/role HTTP bypass. Use explicit LabSession state and no business replay.
+    Keep per-test schemas/ports/contexts and per-thread Playwright drivers. Retain
+    challenge/token CAS, consistent user-first locks, replay history and DB uniqueness.
+    Use bounded generated cases on owned endpoints only; distinguish shared OpenAPI
+    agreement from independent contract evidence. SMS is mock delivery, never real recipients.
+13. Route failed evidence using [domain triage](../../../docs/defect-management.md).
+    Discard parameter values before hashing; never copy exception/body/secret fields.
+    Preserve original failures when artifacts fail. Do not publish issues/messages.
+14. Update the plan and report commands/results/limitations. Verify installed-wheel
+    behavior and actual PostgreSQL/SMTP/container CI before claiming those capabilities.
+    Keep five private ReqRes live cases pending until configured and executed.
+    Sync repository skill edits in git; this does not install a personal skill.
 
 For DummyJSON, validate simulated cart-add responses without persistence claims.
 Keep login tokens in memory, per test. Preserve HTTP failures and avoid automatic

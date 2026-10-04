@@ -18,20 +18,29 @@ from tests.support.local_booker import LocalBooker
 from tests.support.local_reqres import LocalReqRes
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+pytest_plugins = ["api_framework.reporting.pytest_plugin"]
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addoption(
         "--run-external", action="store_true", default=False, help="Enable live public API tests"
     )
+    parser.addoption(
+        "--lab-postgres", action="store_true", help="Use disposable PostgreSQL lab schemas"
+    )
+    parser.addoption(
+        "--lab-mailpit", action="store_true", help="Use real SMTP and Mailpit retrieval"
+    )
+    parser.addoption("--lab-container", action="store_true", help="Enable owned container tests")
+    parser.addoption("--lab-base-url", default="http://127.0.0.1:18080")
 
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
-    if config.getoption("--run-external"):
-        return
     for item in items:
-        if "external" in item.keywords:
+        if "external" in item.keywords and not config.getoption("--run-external"):
             item.add_marker(pytest.mark.skip(reason="Live service: enable with --run-external"))
+        if "deployment" in item.keywords and not config.getoption("--lab-container"):
+            item.add_marker(pytest.mark.skip(reason="Owned container: enable with --lab-container"))
 
 
 @pytest.fixture(scope="session")

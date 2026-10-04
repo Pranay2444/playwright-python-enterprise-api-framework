@@ -6,3 +6,6 @@ recursive-include .github *.yml
 recursive-include tests *.py *.md
 include src/README.md
 recursive-include src/api_framework/contracts *.json
+include compose.yaml .dockerignore
+recursive-include lab Dockerfile *.md
+recursive-include scripts *.py

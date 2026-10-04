@@ -1,6 +1,6 @@
 # Repository instructions for coding assistants
 
-This is a Phase 4 Python Playwright API automation learning/portfolio project.
+This is a Phase 5 Python Playwright API automation learning/portfolio project.
 Read README.md and docs/validation.md before describing its capabilities.
 
 ## Change approach
@@ -36,6 +36,17 @@ Read README.md and docs/validation.md before describing its capabilities.
 - Use project PUT only: reviewed OpenAPI does not declare project PATCH. Check
   current provider evidence before extending it or assuming a plan entitlement.
 - Keep 429/Retry-After visible without replay. Do not exhaust public quotas to test them.
+- For the owned lab, read docs/phase-5-workflow.md, docs/phase-5-auth.md and the Phase 5 plan.
+- Keep actual app rules in framework_lab services, endpoint details in lab clients,
+  and business assertions in tests. Use explicit LabSession transitions, not TokenManager.
+- Inject time/delivery through create_app only; never add HTTP OTP/time/role backdoors.
+- Use synthetic @example.test recipients, captured SMS only, and no real documents.
+- Keep user-before-challenge lock order, unused-row CAS, TOTP step replay protection,
+  refresh-token history and owner/idempotency uniqueness. Never replace these with sleeps.
+- Each worker/test owns its schema/port/contexts; each race thread owns a Playwright driver.
+- Drop only the fixture-owned schema; Compose volume reset belongs only to a disposable stack.
+- Receipts discard parameter suffixes before hashing. Preserve original failures if reporting fails.
+- Do not claim SQLite/captured-delivery checks prove PostgreSQL/SMTP/container execution.
 
 ## Verification
 
@@ -44,8 +55,11 @@ Run the relevant test while editing. Before completing a code change, run:
 ```bash
 ruff check .
 ruff format --check .
-python -m pytest -m "not external"
+python -m pytest -m "not external and not deployment"
+python -m pytest tests/lab -n 2
 python -m build
+python scripts/check_wheel.py
+python scripts/check_docs.py
 ```
 
 Use `python -m pytest -m external --run-external` only when live verification is
@@ -57,6 +71,8 @@ results as a live service pass. Update the test plan for new behavior.
 Classify product, framework, data, and environment failures using evidence. Keep
 observations, hypotheses, and confirmed causes separate. Use the defect report
 template. Do not publish issues/comments or message people unless asked to do so.
+Use docs/defect-management.md and agents/domains/*.agent.md for domain routing;
+guides do not launch agents. Separate setup/call/teardown evidence and human RCA.
 
 ## Project-specific facts
 
@@ -71,5 +87,7 @@ template. Do not publish issues/comments or message people unless asked to do so
   and an executed live result. Default GET 404 does not prove physical record erasure.
 - ReqRes's current LLM reference and older OpenAPI/docs disagree on demo auth; keep
   observed failures and expectations separate. See docs/phase-4-test-plan.md.
-- Security fuzzing, MFA, DB checks, and UI are future phases.
+- Owned-app MFA/files, bounded security/property checks, database probes and parallel
+  execution are Phase 5. UI, exhaustive fuzzing, performance SLAs and production
+  identity operations remain outside this portfolio release.
 - The synchronous `TokenManager` is not thread-safe. Do not share it across threads.

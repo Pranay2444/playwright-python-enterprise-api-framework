@@ -1,10 +1,13 @@
 # Playwright Python Enterprise API Framework
 
-**Phase 4: one API framework across Bearer tokens, cookie sessions, and project API keys.**
+**Phase 5 (final): public API adapters plus an owned MFA, authentication and document lab.**
 
 This project uses **Python + Pytest + Playwright APIRequestContext** to test the
 DummyJSON e-commerce API, Restful Booker booking API, and ReqRes. Shared transport,
 configuration rules, and response validation support separate service adapters.
+Version **0.5.0** adds an owned FastAPI/SQLAlchemy app, email/TOTP/mock-SMS MFA,
+verified JWT/session policy, document lifecycle, PostgreSQL/Mailpit/Docker checks,
+bounded property/security checks, two-worker execution and domain failure receipts.
 DummyJSON covers discovery and simulated carts; Booker adds persistent CRUD within
 the lifetime of its shared demo dataset. ReqRes adds public fixture scenarios and
 an API-key-authenticated persistent project adapter. Project live verification
@@ -17,12 +20,14 @@ features from the roadmap.
 ## Start here
 
 1. Follow [Setup](#setup-on-macos-or-linux).
-2. Run the deterministic suite: `python -m pytest -m "not external"`.
+2. Run the deterministic suite: `python -m pytest -m "not external and not deployment"`.
 3. Read [the Phase 1 walkthrough](docs/phase-1-walkthrough.md) while opening the code.
 4. Continue with [the Phase 2 walkthrough](docs/phase-2-walkthrough.md) for contracts and negative testing.
 5. Follow [the Phase 3 walkthrough](docs/phase-3-walkthrough.md) for booking lifecycle and cleanup.
 6. Read [the Phase 4 walkthrough](docs/phase-4-walkthrough.md) for API keys, project data, and quotas.
-7. Run selected live suites explicitly; configure your own key before ReqRes project tests.
+7. Follow [Phase 5 setup](docs/phase-5-walkthrough.md), [layer workflow and patterns](docs/phase-5-workflow.md),
+   [auth state and failures](docs/phase-5-auth.md), and [domain defect/RCA](docs/defect-management.md).
+8. Run selected live suites explicitly; configure your own key before ReqRes project tests.
 
 ## What is implemented
 
@@ -49,7 +54,14 @@ features from the roadmap.
 | Repeatable checks | Unit tests plus local HTTP checks using the real Playwright driver |
 | Public service checks | The same functional scenarios have an opt-in live target |
 | Rate-limit behavior | Return 429 and Retry-After unchanged; loopback checks prove no automatic replay |
-| CI | Python 3.11/3.12/3.13 quality; independent DummyJSON, Booker, ReqRes demo/project live jobs |
+| Owned app | Actual FastAPI HTTP; synthetic users/tenants; SQLAlchemy SQLite or PostgreSQL |
+| Owned auth | Argon2, password-first MFA, strict verified HS256 JWTs, DB-backed sessions, explicit refresh rotation/reuse revocation/logout |
+| MFA | Correlated email via real SMTP/Mailpit or captured delivery; controlled TOTP; injected mock SMS |
+| Documents | Bounded text upload, SHA-256, metadata/download/delete, owner/tenant enforcement, DB idempotency uniqueness |
+| Database oracle | Separate-session row/content/audit checks; fixture-owned disposable schemas |
+| Owned security / properties | Claims, expiry/replay, cross-user/member gates, lockouts, strict inputs; bounded Hypothesis examples |
+| Parallelism / defects | Isolated xdist workers; allowlisted parameter-free setup/call/teardown receipts and domain RCA guides |
+| CI | Python 3.11/3.12/3.13 quality, installed-wheel/docs checks, PostgreSQL/SMTP parallel tests and Docker smoke; separate provider live toggles |
 | AI-assisted workflow | Repository instructions, testing skill, defect triage/RCA guide |
 
 **Important DummyJSON behavior:** cart additions return simulated results and are
@@ -79,6 +91,12 @@ transport without pretending that cookie authentication is a Bearer-token lifecy
 
 | Location | Responsibility |
 | --- | --- |
+| `src/framework_lab/` | Owned app factory/routes/services/security/storage/delivery |
+| `src/api_framework/clients/lab/` | Auth/document HTTP adapters |
+| `src/api_framework/auth/lab_session.py` | Explicit per-test MFA/access/refresh state |
+| `src/api_framework/reporting/` | Opt-in domain failure receipts |
+| `tests/lab/`, `tests/deployment/` | Actual owned-app HTTP and container workflows |
+| `compose.yaml`, `lab/`, `scripts/` | Disposable infrastructure, private-key bootstrap, package/docs checks |
 | `src/api_framework/config.py` | Load and validate settings |
 | `src/api_framework/core/api_client.py` | Send GET/POST/general requests; attach auth; log metadata |
 | `src/api_framework/core/responses.py` | Status, JSON media type, and object assertions |
@@ -113,7 +131,7 @@ transport without pretending that cookie authentication is a Bearer-token lifecy
 
 ## Setup on macOS or Linux
 
-Use Python **3.11 or newer**. Run these commands from the repository root:
+Use Python **3.11–3.13** (the CI-tested versions). Run these commands from the repository root:
 
 ```bash
 python3 -m venv .venv
@@ -122,7 +140,7 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements-dev.txt
 python -m pip install --no-deps -e .
 cp .env.example .env
-python -m pytest -m "not external"
+python -m pytest -m "not external and not deployment"
 ```
 
 `-e .` installs the local package in editable mode: edits under `src/` are immediately
@@ -134,6 +152,8 @@ replace them only with credentials suitable for the target environment.
 
 **No browser installation is needed for this API-only phase.** The Playwright Python
 package includes the driver used by `APIRequestContext`; we do not launch Chromium.
+The lock includes lab dependencies; a base consumer install keeps the owned app
+optional via the `lab` extra. Docker is needed only for the infrastructure checks.
 UI automation and browser traces are separate future additions.
 
 Windows PowerShell: create the venv with `py -3 -m venv .venv`, activate with
@@ -144,25 +164,31 @@ Windows PowerShell: create the venv with `py -3 -m venv .venv`, activate with
 
 | Goal | Command |
 | --- | --- |
-| Deterministic local suite | `python -m pytest -m "not external"` |
-| Default run with live cases shown as skipped | `python -m pytest` |
-| Local smoke scenarios | `python -m pytest -m "smoke and not external"` |
-| Local contract checks | `python -m pytest -m "contract and not external"` |
-| Local rejected requests | `python -m pytest -m "negative and not external"` |
-| Local boundary checks | `python -m pytest -m "boundary and not external"` |
+| Deterministic local suite | `python -m pytest -m "not external and not deployment"` |
+| Default run with live/container cases skipped | `python -m pytest` |
+| Local smoke scenarios | `python -m pytest -m "smoke and not external and not deployment"` |
+| Local contract checks | `python -m pytest -m "contract and not external and not deployment"` |
+| Local rejected requests | `python -m pytest -m "negative and not external and not deployment"` |
+| Local boundary checks | `python -m pytest -m "boundary and not external and not deployment"` |
 | Live DummyJSON only | `python -m pytest -m "external and not booker and not reqres" --run-external` |
-| Local Booker only | `python -m pytest -m "booker and not external"` |
+| Local Booker only | `python -m pytest -m "booker and not external and not deployment"` |
 | Live Booker only | `python -m pytest -m "booker and external" --run-external` |
-| Local ReqRes | `python -m pytest -m "reqres and not external"` |
+| Local ReqRes | `python -m pytest -m "reqres and not external and not deployment"` |
 | Live ReqRes demo | `python -m pytest -m "reqres_demo and external" --run-external` |
 | Live ReqRes project (configured key) | `python -m pytest -m "reqres_project and external" --run-external` |
 | All live services (configured key) | `python -m pytest -m external --run-external` |
 | Cleanup fault injection | `python -m pytest tests/local/test_booking_cleanup.py` |
 | Live smoke only | `python -m pytest -m "smoke and external" --run-external` |
 | Both targets plus framework checks | `python -m pytest --run-external` |
-| Workflows locally | `python -m pytest -m "workflow and not external"` |
+| Workflows locally | `python -m pytest -m "workflow and not external and not deployment"` |
+| Owned lab locally | `python -m pytest tests/lab` |
+| Owned lab with two workers | `python -m pytest tests/lab -n 2` |
+| Owned PostgreSQL/SMTP | See [Phase 5 commands](docs/phase-5-walkthrough.md#postgresql-and-real-smtp-tests) |
+| Installed container flow | `python -m pytest tests/deployment --lab-container` (stack running) |
+| Domain failure receipts | `python -m pytest tests/lab --defect-dir=reports/defects` |
+| Installed wheel / docs | `python scripts/check_wheel.py` (after build) / `python scripts/check_docs.py` |
 | Framework unit checks only | `python -m pytest tests/unit` |
-| Produce a report | `python -m pytest -m "not external" --junitxml=reports/local-results.xml` |
+| Produce a report | `python -m pytest -m "not external and not deployment" --junitxml=reports/local-results.xml` |
 | Lint / formatting | `ruff check .` / `ruff format --check .` |
 
 Functional test names end in `[local]` or `[live]`. A local pass verifies framework
@@ -297,9 +323,44 @@ and full OpenAPI/provider verification remain outside this phase.
 Read [the Phase 4 plan](docs/phase-4-test-plan.md) for provider discrepancies,
 scenario mapping, cleanup limits, and point-in-time evidence.
 
+## Phase 5: owned authentication and document workflows
+
+The owned lab gives this portfolio a system whose security and persistence rules
+we can control and inspect. It is a real FastAPI app, separate from the small
+public-service test doubles. A test registers a synthetic user, signs in with
+password plus MFA, verifies identity, uploads a small text document, compares
+metadata/download bytes with the database, deletes/verifies absence, rotates
+refresh, and logs out. Every call uses the existing Playwright transport.
+
+Default tests use per-test SQLite, captured email/mock SMS and injected time.
+The owned CI job starts PostgreSQL and Mailpit, runs isolated schemas with two
+workers and real SMTP, and then exercises the installed app container. No HTTP
+endpoint exposes OTPs, advances time, or assigns an admin role.
+
+Auth handles exact expiry, challenge/TOTP replay, atomic refresh rotation,
+known-token reuse revoking the family, unknown forged tokens without revocation,
+password/OTP attempt limits, and fail-closed client failures. Documents enforce
+both owner and tenant and a database uniqueness constraint for idempotent uploads.
+Domain failure receipts discard test parameters before hashing and never copy
+exception strings or response bodies; human triage confirms causes.
+
+Read these in order:
+
+1. [Phase 5 walkthrough and Docker commands](docs/phase-5-walkthrough.md)
+2. [Workflow, patterns, every layer and its communication](docs/phase-5-workflow.md)
+3. [Authentication states, expiry/replay/refresh/logout and failure handling](docs/phase-5-auth.md)
+4. [Risk-based Phase 5 test plan](docs/phase-5-test-plan.md)
+5. [Domain defect reporting and RCA](docs/defect-management.md)
+
+The lab is disposable, uses synthetic `@example.test` recipients, and sends no real
+SMS. TOTP enrollment/storage is simplified; no production identity, security audit,
+malware scanning, object storage, load SLA or exhaustive fuzzing claim is made.
+Private keys are generated locally, ignored and excluded from Docker/package data.
+See the guides for concrete boundaries and actual execution evidence.
+
 ## Authentication decisions
 
-- `TokenManager` receives a `TokenSource` protocol, so a future service can provide
+- DummyJSON `TokenManager` receives a `TokenSource` protocol, so a future service can provide
   its own login/refresh implementation without changing the cache.
 - The cache is in memory and scoped to one test. There is no global token or shared
   token file. Login cookies live in a separate request context.
@@ -342,7 +403,7 @@ states compatible dependency ranges. To update the pins deliberately with `uv`:
 uv pip compile pyproject.toml --extra dev -o requirements-dev.txt
 python -m pip install -r requirements-dev.txt
 ruff check .
-python -m pytest -m "not external"
+python -m pytest -m "not external and not deployment"
 ```
 
 ## AI-assisted testing
@@ -381,23 +442,25 @@ future services.
 | 2 | JSON Schema/Pydantic, contract checks, negative and boundary tests | Implemented |
 | 3 | Restful Booker persistent booking create/read/update/patch/delete lifecycle | Implemented |
 | 4 | ReqRes demo/project adapter, API keys, contracts, owned records, 429 checks | Implemented; project live compatibility needs your key |
-| 5 | Owned FastAPI app, JWT, PostgreSQL, Mailpit, MFA, file workflows | Planned |
-| Later | Local security/failure injection, Schemathesis/Hypothesis, Docker, richer reporting | Planned |
+| 5 — final | Owned FastAPI MFA/document app, JWT/replay/refresh policy, PostgreSQL/Mailpit/Docker, bounded security/Hypothesis, workers, domain reports | Implemented; execution evidence in validation notes |
+| Optional extensions | UI journeys, exhaustive schema fuzzing, performance work, production identity operations | Outside the five-phase release |
 
-See [docs/roadmap.md](docs/roadmap.md) for acceptance criteria. Security fuzzing,
-load testing, rate-limit stress, and cross-user access checks belong in an owned
-local environment. Those capabilities remain future work.
+See [docs/roadmap.md](docs/roadmap.md) for acceptance criteria. Bounded cross-user,
+expiry/replay and generated-input checks run only in the owned lab. UI, exhaustive
+fuzzing and load testing remain optional future work.
 
 ## Validation and sources
 
 [Validation notes](docs/validation.md) retain each phase's separate evidence.
-Phase 4 has **203 passing deterministic tests** and **51 live-capable cases**:
+Phase 5 verification is recorded there with exact local/package/CI outcomes.
+The retained Phase 4 record has **203 passing deterministic tests** and **51 live-capable cases**:
 32 DummyJSON, 10 Booker, 4 ReqRes demo, and 5 ReqRes project. CI passed on Python
 **3.11, 3.12, and 3.13**. The explicit live run passed **46 cases** across DummyJSON,
 Booker, and the ReqRes demo. The **5 ReqRes project live cases remain unexecuted**
 until a private key and project are configured. See the record for run links and
 the distinction between local-model and live evidence.
-Official references used for this phase:
+Official references for the public adapters follow; owned-app references are
+listed in [the authentication guide](docs/phase-5-auth.md):
 
 - [Playwright Python API testing](https://playwright.dev/python/docs/api-testing)
 - [APIRequestContext reference](https://playwright.dev/python/docs/api/class-apirequestcontext)
@@ -424,4 +487,6 @@ negative/boundary cases while distinguishing framework policy from provider beha
 Phase 3 reuses the core for a second auth style and persistent booking lifecycle,
 with owned-resource tracking and tested cleanup after failures. Phase 4 adds
 API-key project records and distinguishes demo simulation, local wiring, and
-account-specific live evidence."
+account-specific live evidence. Phase 5 adds an owned app with password-first MFA,
+verified JWTs and revocable sessions, document/database checks, real SMTP and Docker
+CI, isolated parallel workers, and domain-based evidence with human RCA."

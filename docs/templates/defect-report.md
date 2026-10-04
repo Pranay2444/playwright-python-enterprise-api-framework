@@ -2,6 +2,9 @@
 
 - **Title:** Specific trigger and incorrect outcome
 - **Classification:** Product / framework / expectation / data / environment
+- **Domain:** Authentication / documents / persistence / contracts / framework / public-apis
+- **Service and execution target:** Lab/provider; unit/local-http/SQLite/PostgreSQL/container/public
+- **Failure phase / safe evidence ID / correlation ID:** Setup / call / teardown
 - **Severity and priority:** State the concrete impact and urgency
 - **Test node ID and command:**
 - **Target and versions:** Local/live, Python, dependency pins, commit

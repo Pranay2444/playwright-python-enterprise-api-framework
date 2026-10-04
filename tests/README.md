@@ -41,12 +41,12 @@ driver is session-scoped. Tests do not depend on test order or another test's lo
 Selection examples:
 
 ```bash
-python -m pytest tests/functional/test_products.py -m "not external"
+python -m pytest tests/functional/test_products.py -m "not external and not deployment"
 python -m pytest tests/functional/test_auth.py -m external --run-external
-python -m pytest -m "regression and not external"
-python -m pytest -m "booker and not external"
+python -m pytest -m "regression and not external and not deployment"
+python -m pytest -m "booker and not external and not deployment"
 python -m pytest -m "booker and external" --run-external
-python -m pytest -m "reqres and not external"
+python -m pytest -m "reqres and not external and not deployment"
 python -m pytest -m "reqres_demo and external" --run-external
 python -m pytest -m "reqres_project and external" --run-external
 python -m pytest --collect-only -q
@@ -70,3 +70,19 @@ name marker. Seventeen loopback checks cover cleanup (including negative-create
 unexpected success), key isolation, safe path segments, redacted logs/errors, and
 429/Retry-After without replay. Demo POST is simulated and needs no cleanup.
 See [Phase 4](../docs/phase-4-test-plan.md) for account setup and verification limits.
+
+## Phase 5 targets and resource ownership
+
+`tests/lab` sends actual Playwright HTTP to per-test Uvicorn applications. Default
+SQLite/captured email/controlled time is deterministic. `--lab-postgres` creates
+and tears down a random schema; `--lab-mailpit` uses real SMTP and recipient/challenge
+correlation. `-n 2` isolates workers; race threads own separate Playwright drivers.
+`tests/deployment --lab-container` targets the installed Compose app and requires
+the stack. It is skipped without opt-in. See [setup](../docs/phase-5-walkthrough.md)
+and [scenario mapping](../docs/phase-5-test-plan.md).
+
+`--defect-dir=reports/defects` writes allowlisted failure metadata by domain and
+worker. Parameter suffixes are discarded before hashing; no response or exception
+strings are copied. JUnit remains separate and requires review before sharing.
+Use [domain triage](../docs/defect-management.md), preserving original and teardown
+failures independently. Do not change failures into skips or hide them with retries.

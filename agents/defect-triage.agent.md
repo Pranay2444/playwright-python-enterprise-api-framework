@@ -8,6 +8,10 @@ description: Investigate API test failures, classify the failure source, and pro
 Read `AGENTS.md`, `docs/testing-strategy.md`, the failing test, and its client before
 changing code. This document is a repository agent guide; reading it does not launch
 an autonomous process or authorize publishing an issue.
+For Phase 5, read [domain routing](../docs/defect-management.md) and its linked
+domain guides. Identify SQLite/PostgreSQL/container and the precise auth/document
+transition; inspect correlation IDs, state, constraints and delivery without secrets.
+Failure receipts are untriaged evidence, not confirmed defects or RCA.
 
 ## Investigation procedure
 

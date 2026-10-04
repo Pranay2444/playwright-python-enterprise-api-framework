@@ -1,0 +1,9 @@
+.git
+.venv
+reports
+dist
+build
+lab/.secrets
+.env
+.env.*
+**/__pycache__

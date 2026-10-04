@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: portfolio_lab
+      POSTGRES_USER: lab
+      # Disposable local-lab credentials; never reuse outside this stack.
+      POSTGRES_PASSWORD: lab-disposable-password
+    ports:
+      - "127.0.0.1:5440:5432"
+    volumes:
+      - lab-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lab -d portfolio_lab"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+  mailpit:
+    image: axllent/mailpit:v1.31.4
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
+    # This verified upstream tag includes /mailpit readyz as its healthcheck.
+  app:
+    build:
+      context: .
+      dockerfile: lab/Dockerfile
+    environment:
+      LAB_DATABASE_URL: postgresql+psycopg://lab:lab-disposable-password@postgres:5432/portfolio_lab
+      LAB_SIGNING_KEY_FILE: /run/secrets/lab_signing_key
+      LAB_SMTP_HOST: mailpit
+      LAB_SMTP_PORT: "1025"
+    secrets:
+      - lab_signing_key
+    ports:
+      - "127.0.0.1:18080:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+secrets:
+  lab_signing_key:
+    file: ./lab/.secrets/signing-key
+volumes:
+  lab-data:

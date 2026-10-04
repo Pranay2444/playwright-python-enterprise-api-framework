@@ -12,3 +12,6 @@ dist/
 build/
 .DS_Store
 .idea/
+lab/.secrets/
+*.db
+.hypothesis/

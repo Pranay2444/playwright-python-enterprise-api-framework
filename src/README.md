@@ -55,3 +55,20 @@ support because cleanup is a test lifecycle concern. See the
 
 Richer auth providers and retry policies remain future work. Avoid speculative
 wrapper methods with no users.
+
+## Phase 5 owned application and automation
+
+`framework_lab` is a second installed package: app composition/routes, strict
+schemas, auth/document services, JWT/password/OTP policy, database models and
+delivery adapters. `api_framework.clients.lab`, `auth.lab_session`, `auth.mailpit`,
+`assertions.openapi` and `reporting` remain caller-side automation. Multipart is
+the shared transport addition. Do not couple public adapters to the owned app.
+
+Read [the complete communication/pattern map](../docs/phase-5-workflow.md) and
+[auth policy](../docs/phase-5-auth.md). New app rules belong in services; endpoint
+paths belong in clients; assertions stay in tests. Use one transaction for state
+and audit, consistent locks/CAS/uniqueness for races, and explicit auth transitions.
+No public OTP/time/role test backdoor or automatic business-request replay.
+
+Build and run `python scripts/check_wheel.py` to verify both packages and all three
+public schema assets outside src, plus real owned-app HTTP routes.

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "playwright-python-enterprise-api-framework"
-version = "0.4.0"
-description = "An incremental Playwright Python API testing portfolio, starting with DummyJSON."
+version = "0.5.0"
+description = "Layered Playwright API automation with public adapters and an owned MFA/document lab."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -16,7 +16,15 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.3,<10", "ruff>=0.11,<1", "build>=1.2,<2"]
+lab = [
+  "fastapi>=0.115,<1", "uvicorn>=0.34,<1", "sqlalchemy>=2.0,<3",
+  "psycopg[binary]>=3.2,<4", "pwdlib[argon2]>=0.2,<1", "PyJWT>=2.12,<3",
+  "pyotp>=2.9,<3", "python-multipart>=0.0.20,<1",
+]
+dev = [
+  "pytest>=8.3,<10", "ruff>=0.11,<1", "build>=1.2,<2",
+  "hypothesis>=6.130,<7", "pytest-xdist>=3.6,<4",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -43,6 +51,14 @@ markers = [
   "reqres: ReqRes demo and project scenarios",
   "reqres_demo: ReqRes public fixture API; no persistence",
   "reqres_project: ReqRes private project records; requires configured manage key",
+  "lab: owned FastAPI lab; never a public service",
+  "auth: password, MFA, token, and session policy",
+  "documents: upload, metadata, checksum, and download policy",
+  "database: independent persistence and audit checks",
+  "security: bounded owned-environment access and input rejection",
+  "property: bounded generated-input policy checks",
+  "domain(name): defect routing: authentication, documents, persistence, contracts, framework, public-apis",
+  "deployment: owned Docker app workflow; requires --lab-container",
 ]
 
 [tool.ruff]

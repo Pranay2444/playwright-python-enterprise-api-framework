@@ -1,0 +1,52 @@
+name: Domain defect report
+description: Record a reproduced API/framework failure with redacted evidence
+title: "[Defect] "
+body:
+  - type: markdown
+    attributes:
+      value: "Remove credentials, OTPs, token values, raw mail and private payloads. A failure receipt is evidence, not confirmed RCA. No issue is created automatically."
+  - type: dropdown
+    id: domain
+    attributes:
+      label: Investigation domain
+      options: [authentication, documents, persistence, contracts, framework, public-apis]
+    validations:
+      required: true
+  - type: dropdown
+    id: target
+    attributes:
+      label: Execution target
+      options: [SQLite owned lab, PostgreSQL and Mailpit owned lab, App container, Local provider model, Public provider, Unit or packaging]
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Commit and versions
+      description: Commit, Python version and dependency lock; no environment values
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction and safe command
+      description: Parameter-free test node, service, failure phase, preconditions and steps
+    validations:
+      required: true
+  - type: textarea
+    id: expectation
+    attributes:
+      label: Expected and actual behavior
+      description: Contract or invariant basis, method/path/status, UTC timestamp, safe correlation/evidence IDs
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact and investigation
+      description: Severity/priority basis, observations, competing hypotheses, RCA status, next check
+  - type: textarea
+    id: retest
+    attributes:
+      label: Fix, regression and retest
+      description: Concrete action and executed outcomes; distinguish pending live/account checks

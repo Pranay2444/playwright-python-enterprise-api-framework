@@ -1,4 +1,4 @@
-# Testing strategy through Phase 4
+# Testing strategy through Phase 5
 
 ## Goal and scope
 
@@ -9,8 +9,10 @@ service failures. Use a repeatable local base and a small live service suite.
 
 Phases 2–4 add partial JSON Schema response contracts, strict Pydantic views/inputs,
 negative/boundary checks, cookie/API-key auth, and tracked persistent-resource cleanup.
-The current scope excludes exhaustive OpenAPI/provider verification,
-performance SLAs, RBAC, database verification, MFA, UI flows, and security fuzzing.
+Phase 5 adds an owned actual FastAPI app with MFA, verified JWT/session policy,
+owner/tenant/member gates, database probes, bounded security/Hypothesis checks,
+Docker/PostgreSQL/Mailpit and worker-isolated reporting. Exhaustive OpenAPI/provider
+verification, performance SLAs, UI and production identity operations remain outside scope.
 
 ## Test pyramid
 
@@ -19,7 +21,9 @@ performance SLAs, RBAC, database verification, MFA, UI flows, and security fuzzi
 | Unit | Cache reuse, timed refresh, failure invalidation, independent managers, config validation, payload isolation, malformed schema/model inputs, diagnostic redaction | Fast feedback without driver/network dependencies |
 | Local HTTP integration | Real Playwright requests, cookie/Bearer isolation, query encoding, exposed HTTP errors, transport error redaction, persistent CRUD wiring, cleanup failure injection | Verify components work together without public-service availability |
 | Live API functional/contract/negative/boundary | 32 DummyJSON + 10 Booker + 4 ReqRes demo + 5 configured ReqRes project cases | Confirm deployed behavior separately per service/surface; collection is not a pass |
-| UI E2E | None through Phase 4 | Add only critical browser journeys when UI scope is introduced |
+| Owned app integration | Actual Uvicorn/Playwright HTTP; SQLite policy; PostgreSQL row locking and DB oracle; real SMTP/Mailpit | Controlled expiry/failures and independent persistence evidence |
+| Installed infrastructure workflow | Docker app email MFA/document/refresh/logout smoke | Verify image, secret bootstrap, networking and real dependencies |
+| UI E2E | None through Phase 5 | Add only critical browser journeys when UI scope is introduced |
 
 Treat the pyramid as an allocation of feedback cost and risk, not a fixed percentage.
 Local functional scenarios exercise the same client/test code as live scenarios,
@@ -30,12 +34,12 @@ for integration verification against the real service.
 
 | Risk | Coverage now | Additional coverage later |
 | --- | --- | --- |
-| Incorrect identity after login/refresh | Identity checks, proactive refresh, invalid/missing login and token rejection | Owned-app expiry/signature/access policy checks |
+| Incorrect identity after login/refresh | Identity checks, proactive refresh, invalid/missing login and token rejection | Broader key rotation/recovery policy |
 | Cookie contamination hides missing Bearer auth | Separate contexts, local isolation regression, local/live missing-auth scenarios | Broader owned-app auth policy |
-| Shared cache creates cross-test identity errors | Function scope and independent-manager tests | Worker/process execution validation |
+| Shared cache creates cross-test identity errors | Function scope and independent-manager tests | Larger concurrency/load study |
 | Hardcoded IDs break when data changes | Discover IDs from responses; nonstandard local fixture IDs | API-created lifecycle data in owned/persistent services |
 | HTTP wrapper hides service failures | Return 4xx/5xx without retries; assert status in tests | Explicit bounded retry policy for approved idempotent requests |
-| Simulated cart mistaken for persistence | Validate only the add response; document limitation | Persistent booking/local FastAPI CRUD lifecycle |
+| Simulated cart mistaken for persistence | Validate only the add response; document limitation | Object storage and independent persistence designs |
 | Secrets leak into diagnostics | No query/header/body logs; sanitized transport/schema exceptions; hidden model input errors; masked token/settings repr | Broader artifact redaction once richer reporting is introduced |
 | Persistent data survives failed assertions | Track IDs before contract checks; fixture teardown; owner checks; verify 404; visible cleanup failures | Owned-app atomic cleanup and durable resource ownership |
 | Cookie auth forced into Bearer lifecycle | Dedicated Booker session and anonymous client; no invented refresh | Additional auth adapters only when needed |
@@ -44,7 +48,7 @@ for integration verification against the real service.
 | Unverified provider/plan assumptions | Reviewed ReqRes OpenAPI excerpt and documented conflicts; account-specific live result kept separate | Recheck selected plan and live contract after configuration |
 | Public endpoint outage blocks all development | Deterministic CI and separate opt-in live job | Scheduled service checks after reliability/cost review |
 | Shape drift hidden by ad hoc assertions | Partial response schemas; strict typed views; malformed nested unit cases | Additional service-specific contracts |
-| Invalid data blocked before reaching a rejection test | Strict valid factories; raw dictionaries for server negatives | Owned-app validation matrices |
+| Invalid data blocked before reaching a rejection test | Strict valid factories; raw dictionaries for server negatives | Broader bounded schema generation |
 
 ## Data and environment approach
 
@@ -63,7 +67,7 @@ for integration verification against the real service.
 
 ## Authentication and failure policy
 
-Acquire tokens lazily through `TokenSource`. Cache access/refresh tokens in memory.
+For DummyJSON, acquire tokens lazily through `TokenSource`. Cache access/refresh tokens in memory.
 Refresh before the requested lifetime expires using an injectable monotonic clock;
 test timing without real sleeps. The server remains the authority on validity.
 Do not use this local timing policy as evidence that a JWT signature was verified.
@@ -71,6 +75,11 @@ Do not use this local timing policy as evidence that a JWT signature was verifie
 Do not replay business requests after 401, 429, 5xx, or transport failures in the implemented phases.
 Disable automatic redirects/retries. Expose failures to the test and classify them
 using the defect agent. A refreshed token can be used by a subsequent explicit call.
+
+For the owned lab, use explicit LabSession authentication/refresh/logout. Inject
+server time and delivery through create_app; keep JWT checks and DB revocation
+authoritative. Use consistent locks/CAS/unique constraints rather than sleeps.
+Read [the auth guide](phase-5-auth.md) before altering replay or expiry semantics.
 
 ## Quality gates
 
@@ -93,6 +102,24 @@ Keep confirmed facts, hypotheses, and missing evidence separate in RCA reports.
 
 Use [the defect report template](templates/defect-report.md) and the repository
 agent instructions. Reproduce with the smallest test before changing the framework.
+
+## Phase 5 execution and exit criteria
+
+1. Real HTTP covers password-first email/TOTP/mock-SMS, JWT claims/signature,
+   exact expiry, attempt limits, challenge/step replay, refresh history and logout.
+2. Upload/download/metadata/delete and owner/tenant checks agree with a separate
+   DB session; DB uniqueness and bounded races cover duplicate writes/consumption.
+3. Per-test schema/port/context/key/email ownership survives parallel workers.
+4. Actual PostgreSQL/SMTP and installed app container workflow pass in CI.
+5. Full Python matrix, installed-wheel assets/routes, formatting and docs file targets pass.
+6. Failure receipts retain setup/call/teardown without parameters, bodies or exception
+   text; artifact errors preserve original test failures; humans confirm RCA.
+7. Workflow/pattern/layer/auth/domain guides and truthful validation stay maintained.
+
+No test count proves exhaustive security. SQLite does not implement PostgreSQL
+row locking. Captured email is not SMTP execution. Generated OpenAPI agreement
+is not independently verified provider conformance. [The Phase 5 plan](phase-5-test-plan.md)
+records those boundaries. [Domain triage](defect-management.md) routes failures.
 
 ## Phase 1 foundation criteria (retained)
 

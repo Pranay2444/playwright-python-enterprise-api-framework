@@ -1,4 +1,10 @@
-# DummyJSON functional test plan
+# Project test plans
+
+Plans: [Phase 2 contracts](phase-2-test-plan.md), [Phase 3 bookings](phase-3-test-plan.md),
+[Phase 4 ReqRes](phase-4-test-plan.md), [Phase 5 owned auth/documents](phase-5-test-plan.md).
+Use [the testing strategy](testing-strategy.md) and [validation records](validation.md).
+
+## DummyJSON functional baseline
 
 Phase 1 scenarios remain the functional baseline. Phase 2 applies named response
 contracts to these scenarios and adds the coverage in the
