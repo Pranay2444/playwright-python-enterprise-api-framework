@@ -38,8 +38,9 @@ To contact the real shared demo explicitly:
 python -m pytest -m "booker and external" --run-external
 ```
 
-`-m external --run-external` now selects both services. To retain the older
-DummyJSON-only selection, use `-m "external and not booker" --run-external`.
+In the current repository, `-m external --run-external` selects all live services,
+including ReqRes project cases that require private configuration. For DummyJSON
+only, use `-m "external and not booker and not reqres" --run-external`.
 Each CI live service has a separate input/job/report, so one outage does not hide
 which service failed. A live test is not run automatically on a PR.
 

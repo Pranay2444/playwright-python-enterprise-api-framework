@@ -30,8 +30,32 @@ create success, changed owners, continued cleanup, redacted errors, and four-met
 
 ### CI and live evidence
 
-Pending Phase 4 publication and configured runs. ReqRes demo and project remain
-separate jobs; collection/local execution is not live compatibility evidence.
+Phase 4 source was published on `main` in commit `3b65d61`.
+
+The [push quality run](https://github.com/Pranay2444/playwright-python-enterprise-api-framework/actions/runs/37207578460)
+passed on Python **3.11, 3.12, and 3.13**, including lint, formatting, distribution
+builds, and **203 deterministic tests per matrix job**.
+
+The [explicit live run](https://github.com/Pranay2444/playwright-python-enterprise-api-framework/actions/runs/37207678688)
+passed all three quality jobs and all three enabled live jobs on Python **3.12.14**:
+
+| Job | Executed outcome |
+| --- | --- |
+| `live-dummyjson` | **32 passed; 222 deselected in 2.79 seconds** |
+| `live-booker` | **10 passed; 244 deselected in 1.56 seconds** |
+| `live-reqres-demo` | **4 passed; 250 deselected in 2.41 seconds** |
+| `live-reqres-project` | **Disabled input; not executed** |
+
+The **46 live passes** confirm existing DummyJSON/Booker compatibility and anonymous
+ReqRes demo pagination, discovered-user detail, empty pages, and simulated POST
+echoes at execution time. No teardown errors were reported. ReqRes project
+persistence, project-key authentication, and cleanup remain local-model evidence
+until the five configured project cases run against the user's collection.
+
+All six executed jobs uploaded JUnit artifacts successfully, with seven-day
+retention. Public execution used GitHub Actions. A later documentation-only commit
+records these results and updates older service selectors; Python source, schemas,
+dependency pins, and workflow configuration are unchanged by that commit.
 
 ### Account and provider limitations
 
@@ -41,8 +65,9 @@ repository Secret and REQRES_PROJECT_ID Variable using the
 [Phase 4 walkthrough](phase-4-walkthrough.md), then enable the project live toggle.
 Selecting project live tests without config fails before HTTP; it is not a skip/pass.
 
-The newer LLM/landing references describe keyless demo access, while older docs
-and OpenAPI declarations differ. The guide mentions project PATCH but the reviewed
+The newer LLM/landing references describe keyless demo access, which the four
+executed demo cases confirmed; older docs and OpenAPI declarations differ. The
+guide mentions project PATCH but the reviewed
 spec does not; only PUT is implemented. See [the plan](phase-4-test-plan.md) for
 the dated source review and snapshot. Direct workspace retrieval of the spec/LLM
 JSON/pricing.md encountered HTTP errors; official web retrieval supplied the

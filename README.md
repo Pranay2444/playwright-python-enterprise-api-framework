@@ -392,8 +392,11 @@ local environment. Those capabilities remain future work.
 
 [Validation notes](docs/validation.md) retain each phase's separate evidence.
 Phase 4 has **203 passing deterministic tests** and **51 live-capable cases**:
-32 DummyJSON, 10 Booker, 4 ReqRes demo, and 5 ReqRes project. Collection alone is
-not live compatibility. See the record for CI/live outcomes and pending configuration.
+32 DummyJSON, 10 Booker, 4 ReqRes demo, and 5 ReqRes project. CI passed on Python
+**3.11, 3.12, and 3.13**. The explicit live run passed **46 cases** across DummyJSON,
+Booker, and the ReqRes demo. The **5 ReqRes project live cases remain unexecuted**
+until a private key and project are configured. See the record for run links and
+the distinction between local-model and live evidence.
 Official references used for this phase:
 
 - [Playwright Python API testing](https://playwright.dev/python/docs/api-testing)

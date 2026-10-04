@@ -66,7 +66,7 @@ ruff check .
 ruff format --check .
 python -m pytest -m "not external" --junitxml=reports/local-results.xml
 python -m build
-python -m pytest -m external --run-external --junitxml=reports/live-results.xml
+python -m pytest -m "external and not booker and not reqres" --run-external --junitxml=reports/live-results.xml
 ```
 
 Completion requires distinguishable envelope/schema/model/business failures,

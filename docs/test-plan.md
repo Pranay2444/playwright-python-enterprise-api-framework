@@ -7,8 +7,9 @@ contracts to these scenarios and adds the coverage in the
 ## Execution model
 
 Run each functional scenario against the local HTTP target during development.
-Run the same scenario against DummyJSON with `-m external --run-external` to verify
-the current service. The local model validates composition; it is not a contract oracle.
+Run the same scenario against DummyJSON with
+`-m "external and not booker and not reqres" --run-external` to verify the current
+service. The local model validates composition; it is not a contract oracle.
 
 P0 covers critical entry/identity behavior. P1 covers the e-commerce data flows.
 The status expectations below must be checked on the live service before reporting
