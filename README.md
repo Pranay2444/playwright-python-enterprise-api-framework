@@ -372,8 +372,8 @@ See the guides for concrete boundaries and actual execution evidence.
   including 4xx/5xx/429, remain available to assertions.
 - Playwright redirects and transport retries are disabled in the wrapper. This
   makes failures visible and avoids accidentally forwarding auth to another origin.
-- The manager is synchronous and not thread-safe. Later worker/process parallelism
-  will require a separate manager and context per worker/test.
+- The manager is synchronous and not thread-safe. Worker/process execution keeps
+  managers and contexts scoped to each test; race threads own separate drivers.
 
 ## Test strategy and CI
 
@@ -383,8 +383,10 @@ checks, including deliberately invalid contracts/models, followed by local HTTP 
 A smaller live suite confirms
 real behavior of each public API. This repository has no UI tests yet.
 
-The workflow runs lint, formatting, distribution builds, and local tests on pushes to `main` and pull
-requests. A failure blocks that job. To run live tests in GitHub Actions, choose
+The workflow runs lint, formatting, distribution builds, installed-wheel/docs checks,
+and local tests on pushes to `main` and pull requests. A subsequent owned job runs
+real PostgreSQL/SMTP with two workers and the installed app container smoke.
+A failure blocks that job. To run live tests in GitHub Actions, choose
 **Actions → API framework quality → Run workflow** and enable the desired service
 checkboxes. ReqRes project execution needs the configured Secret/Variables.
 Each live job runs after quality succeeds, uses Python 3.12, and remains a separate
@@ -400,7 +402,7 @@ into shared reports.
 states compatible dependency ranges. To update the pins deliberately with `uv`:
 
 ```bash
-uv pip compile pyproject.toml --extra dev -o requirements-dev.txt
+uv pip compile pyproject.toml --extra dev --extra lab -o requirements-dev.txt
 python -m pip install -r requirements-dev.txt
 ruff check .
 python -m pytest -m "not external and not deployment"

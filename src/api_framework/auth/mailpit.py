@@ -33,9 +33,14 @@ class MailpitCodeReader:
                     continue
                 if not any(to.get("Address") == self.recipient for to in message.get("To", [])):
                     continue
-                message_id = str(UUID(message["ID"]))
+                # Mailpit v1.31.4 uses opaque 22-character base62 IDs, not UUID text.
+                message_id = message["ID"]
+                if not isinstance(message_id, str) or not re.fullmatch(
+                    r"[A-Za-z0-9]{22}", message_id
+                ):
+                    raise ValueError("Invalid Mailpit message identifier")
                 details = json_object(self.api.get(f"/api/v1/message/{message_id}"))
-                text = details.get("Text", "")
+                text = details.get("Text", "").replace("\r\n", "\n")
                 match = re.fullmatch(
                     rf"Challenge: {re.escape(challenge_id)}\nCode: ([0-9]{{6}})\n?",
                     text.strip() + "\n",

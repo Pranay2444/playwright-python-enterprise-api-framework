@@ -78,6 +78,7 @@ def test_filename_rejections_do_not_persist(lab, filename):
 @pytest.mark.parametrize(
     "content,status",
     [(b"", 413), (b"\xff", 422), (b"a\x00b", 422), (b"x" * 65537, 413), (b"x" * 80000, 413)],
+    ids=["empty", "invalid-utf8", "nul", "above-file-limit", "above-body-limit"],
 )
 def test_size_encoding_and_request_body_rejections(lab, content, status):
     _user, _session, documents = lab.signed_in()
@@ -149,6 +150,7 @@ def test_concurrent_idempotent_upload_has_one_row(lab):
 
 
 @pytest.mark.contract
+@pytest.mark.domain("contracts")
 def test_owned_openapi_and_selected_response_validation(lab):
     spec = json_object(lab.api.get("/openapi.json"))
     assert spec["openapi"].startswith("3.1")

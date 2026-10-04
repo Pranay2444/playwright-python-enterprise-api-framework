@@ -25,7 +25,7 @@ def pytest_runtest_makereport(item, call):
         return
     marker = item.get_closest_marker("domain")
     public_suite = any(
-        part in {"functional", "contract", "negative", "boundary", "booker", "reqres"}
+        part in {"functional", "contract", "contracts", "negative", "boundary", "booker", "reqres"}
         for part in item.path.parts
     )
     domain = (

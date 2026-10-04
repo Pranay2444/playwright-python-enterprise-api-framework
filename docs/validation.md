@@ -13,15 +13,15 @@ and [domain defects/RCA](defect-management.md).
 
 | Check | Executed result |
 | --- | --- |
-| Full deterministic suite / JUnit | **284 passed; 52 deselected in 31.69 seconds** |
-| Allocation | 147 unit + 36 local HTTP + 32 DummyJSON + 10 Booker + 9 ReqRes + 50 owned lab |
+| Full deterministic suite / JUnit | **289 passed; 52 deselected in 31.80 seconds** |
+| Allocation | 152 unit + 36 local HTTP + 32 DummyJSON + 10 Booker + 9 ReqRes + 50 owned lab |
 | Two-worker owned lab | **50 passed in 14.34 seconds**, SQLite/captured delivery |
 | Focused reporting/concurrency/generated HTTP batch | **9 passed** before the final unexpected-failure case was added |
-| Ruff lint / formatting | Passed; 136 Python files formatted |
+| Ruff lint / formatting | Passed |
 | Wheel + sdist build | Passed |
 | Installed-wheel probe outside src | Both packages, three public schema assets, actual HTTP health/register/auth rejection passed |
 | Source archive contents | Compose/Docker/scripts/docs/schema assets present; no private keys, DBs or venv |
-| Markdown local file targets | 168 checked; remote URLs and anchors excluded |
+| Markdown local file targets | 174 checked; remote URLs and anchors excluded |
 | Workflow/Compose/issue-form YAML | Parsed successfully; not a Docker execution substitute |
 | Signing-key initializer | 0600 file/0700 directory, repeat invocation preserves value, git ignored; no key output |
 | Diff whitespace | Passed |
@@ -41,12 +41,25 @@ regressions, not a performance/exhaustive-concurrency proof.
 
 ### CI / real infrastructure execution
 
-Pending the Phase 5 push run. No Docker or PostgreSQL service exists in the local
-workspace. SQLite/captured delivery does not prove real PostgreSQL or SMTP.
-The owned CI job must actually build/start Compose, verify app PID1 UID10001,
-run the 50 owned tests using PostgreSQL and real SMTP/Mailpit with two workers,
-and run the installed app container workflow. Update this section only after
-inspecting executed jobs/logs/artifacts; workflow configuration alone is not evidence.
+Initial source commit `e80a97d` was published without force. Its
+[first push run](https://github.com/Pranay2444/playwright-python-enterprise-api-framework/actions/runs/37218454842)
+passed all three quality jobs: Python3.11/3.12/3.13 each ran **284 deterministic
+cases**, formatting/lint/build, installed-wheel HTTP/assets and docs checks.
+Docker startup and app PID1 UID10001 verification passed. The real PostgreSQL/SMTP
+job reported **31 failed, 19 passed** due to the Mailpit reader assuming UUID message
+IDs; container smoke was not executed. Artifact upload and disposable stack teardown
+completed. This is a framework adapter failure, retained in
+[the redacted RCA](defects/phase-5-mailpit-adapter.md).
+
+Mailpit v1.31.4 source confirms 22-character base62 IDs. The corrected reader validates
+that format and normalizes CRLF. New regressions also check wrong body correlation
+and unsafe IDs. Focused reader/document checks: **27 passed**. A separate pre-fix
+CRLF unit case failed; the first CI did not reach its message body, so its newline
+format is not inferred. Final local suite is **289 passed**, recorded above.
+
+Real infrastructure retest is pending the correction push. No Docker/PostgreSQL
+service exists locally; only actual CI can confirm those paths. Do not treat the
+initial quality jobs or SQLite/captured email as a real SMTP/container pass.
 
 ### Limits retained
 

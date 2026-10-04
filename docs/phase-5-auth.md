@@ -77,8 +77,10 @@ See `tests/lab/test_concurrency.py` for the two-request regressions.
 SMTP sends only to synthetic lab addresses. Mailpit captures locally; it does not
 forward mail to real recipients. `MailpitCodeReader` checks recipient, exact
 challenge-specific subject, body challenge ID, and six-digit body code. It never
-takes the latest message from a shared mailbox. IDs are UUID-validated before
-being used in paths. Polling has a bounded configured budget and each HTTP request
+takes the latest message from a shared mailbox. Challenge IDs are UUID-validated;
+Mailpit v1.31.4 message IDs retain their opaque 22-character ASCII alphanumeric
+format, validated before path use. CRLF email text is normalized to LF before
+strict body matching. Polling has a bounded configured budget and each HTTP request
 has its own timeout; the total can include those request durations.
 
 Polling observes delivery. It does not repeat password/OTP verification or retry a
@@ -192,6 +194,7 @@ database is removed. These are extension choices, not completed Phase 5 claims.
 - [PyJWT API and algorithm/claim rules](https://pyjwt.readthedocs.io/en/stable/api.html)
 - [PyOTP replay guidance](https://pyauth.github.io/pyotp/)
 - [Mailpit API](https://mailpit.axllent.org/docs/api-v1/)
+- [Mailpit v1.31.4 message-ID implementation](https://github.com/axllent/mailpit/blob/v1.31.4/internal/shortuuid/shortuuid.go)
 - [SQLAlchemy session basics](https://docs.sqlalchemy.org/en/20/orm/session_basics.html)
 
 These support library usage. The lab's TTLs, statuses, and acceptance rules are
