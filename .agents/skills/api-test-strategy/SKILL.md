@@ -23,10 +23,15 @@ description: Plan and add tests in this Python Playwright API portfolio using ri
    agreement as proof of a public contract. Add or retain an equivalent live case.
 7. Run the focused local test, `ruff check .`, `ruff format --check .`, and the local
    suite. Run external tests only with explicit opt-in and an available network.
-8. Update the plan and report commands/results/limitations. Label contract, security,
-   performance, MFA, or DB coverage as planned until it exists and has been executed.
+8. For Phase 2 contracts, read `docs/contracts.md`. Use named JSON Schemas for
+   structure and tests for business relationships. Inject malformed nested data in
+   unit tests to prove rejection. Avoid full snapshots and leaking validation inputs.
+9. Distinguish strict factory policy from service rules. Negative API tests must
+   bypass the valid factory and use an anonymous context when testing missing auth.
+10. Update the plan and report commands/results/limitations. Label security,
+    performance, MFA, or DB coverage as planned until it exists and has been executed.
 
-For Phase 1, validate simulated cart-add responses without persistence claims.
+For both implemented phases, validate simulated cart-add responses without persistence claims.
 Keep login tokens in memory, per test. Preserve HTTP failures and avoid automatic
 business-request replay. Route failures to `agents/defect-triage.agent.md` at the
 repository root; do not hide them with skips or retries.

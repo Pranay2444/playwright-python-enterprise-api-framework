@@ -23,6 +23,9 @@ an autonomous process or authorize publishing an issue.
 5. Follow the request through test → fixture → client → core → context → service.
    Inspect setup/teardown, auth-cookie scope, token timing, ID discovery, and data
    prerequisites before proposing a cause.
+   For Phase 2, identify whether the failure is HTTP/envelope, JSON Schema,
+   Pydantic input/view validation, or a business assertion. Compare the schema rule
+   with docs/contracts.md and current provider evidence before changing a contract.
 6. List observations, competing hypotheses, and a discriminating next check.
    Mark RCA confirmed only when the evidence identifies the causal mechanism.
 7. Propose the smallest corrective action and a meaningful regression check. Rerun
@@ -38,6 +41,7 @@ an autonomous process or authorize publishing an issue.
 | Product/service | Valid request violates verified endpoint behavior | Minimal live reproduction and service-side evidence if available |
 | Framework | Incorrect method/path/header/context or leaked state | Local HTTP receipt, client/fixture inspection, targeted regression |
 | Test/expectation | Assertion conflicts with documented behavior | Compare official contract and acceptance intent |
+| Contract/model | Required field/type/range fails, or generated input is invalid | Inspect the safe schema location; compare project policy and upstream contract |
 | Data | Missing discovered resource or explicit prerequisite | Discover data again; check setup/cleanup isolation |
 | Environment | DNS/TLS/proxy/connectivity/timeout/config failure | Separate transport from HTTP response; inspect safe config/network evidence |
 

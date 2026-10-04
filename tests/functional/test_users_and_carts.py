@@ -3,24 +3,26 @@ import pytest
 from api_framework.clients.dummyjson.carts_client import CartsClient
 from api_framework.clients.dummyjson.products_client import ProductsClient
 from api_framework.clients.dummyjson.users_client import UsersClient
-from api_framework.core.responses import json_object
+from api_framework.contracts.validation import contract_json
 from api_framework.data.cart_factory import cart_payload
+
+pytestmark = pytest.mark.contract
 
 
 @pytest.mark.regression
 def test_get_user_by_authenticated_id(users_client: UsersClient) -> None:
-    current = json_object(users_client.me())
-    user = json_object(users_client.get(current["id"]))
+    current = contract_json(users_client.me(), "user")
+    user = contract_json(users_client.get(current["id"]), "user")
     assert user["id"] == current["id"]
     assert user["username"] == current["username"]
 
 
 @pytest.mark.regression
 def test_get_existing_carts_for_discovered_user(carts_client: CartsClient) -> None:
-    existing_carts = json_object(carts_client.list())["carts"]
+    existing_carts = contract_json(carts_client.list(), "cart_page")["carts"]
     assert existing_carts, "The demo needs at least one existing cart for this scenario"
     user_id = existing_carts[0]["userId"]
-    result = json_object(carts_client.for_user(user_id))
+    result = contract_json(carts_client.for_user(user_id), "cart_page")
     assert result["carts"]
     assert all(cart["userId"] == user_id for cart in result["carts"])
     assert any(cart["id"] == existing_carts[0]["id"] for cart in result["carts"])
@@ -30,8 +32,8 @@ def test_get_existing_carts_for_discovered_user(carts_client: CartsClient) -> No
 def test_authenticated_user_cart_collection(
     users_client: UsersClient, carts_client: CartsClient
 ) -> None:
-    user = json_object(users_client.me())
-    result = json_object(carts_client.for_user(user["id"]))
+    user = contract_json(users_client.me(), "user")
+    result = contract_json(carts_client.for_user(user["id"]), "cart_page")
     assert isinstance(result["carts"], list)
     assert all(cart["userId"] == user["id"] for cart in result["carts"])
     # An authenticated user can legitimately have no carts.
@@ -42,11 +44,11 @@ def test_authenticated_user_cart_collection(
 def test_add_cart_from_discovered_user_and_product(
     users_client: UsersClient, products_client: ProductsClient, carts_client: CartsClient
 ) -> None:
-    user = json_object(users_client.me())
-    product = json_object(products_client.list(limit=1))["products"][0]
+    user = contract_json(users_client.me(), "user")
+    product = contract_json(products_client.list(limit=1), "product_page")["products"][0]
     payload = cart_payload(user["id"], product["id"], quantity=2)
 
-    cart = json_object(carts_client.add(payload), expected_status=201)
+    cart = contract_json(carts_client.add(payload), "created_cart", expected_status=201)
 
     assert isinstance(cart["id"], int) and cart["id"] > 0
     assert cart["userId"] == user["id"]

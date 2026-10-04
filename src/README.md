@@ -11,10 +11,13 @@ folder or adding the source directory to `sys.path`.
 | Auth | Token caching and refresh policy through `TokenSource` | Specific service URLs |
 | Domain clients | Endpoints, query parameters, auth response fields | Pytest fixtures and test assertions |
 | Data factories | Fresh payload structure | Shared mutable dictionaries |
+| Contracts | Partial service schemas, strict typed views/inputs, safe diagnostics | HTTP calls, Pytest fixtures, business workflow assertions |
 
 `AuthClient` is the one adapter that parses tokens for `TokenManager`; its public
 `login`, `me`, and `refresh` methods still expose raw responses for testing.
-The `json_object` helper performs basic assertions, not a complete contract check.
+The `json_object` helper checks the HTTP/JSON envelope. `contract_json` builds on
+it using a packaged Draft 2020-12 schema. Both return the original dict, so business
+assertions remain visible in tests. See [contract maintenance](../docs/contracts.md).
 
 To add a new endpoint:
 
@@ -25,6 +28,11 @@ To add a new endpoint:
 5. Add the local test-double behavior needed to verify transport/wiring, then run
    the equivalent live scenario separately.
 6. Update the test plan and clearly record which target was executed.
+
+If the endpoint uses an existing shape, reuse its named contract. Otherwise add a
+partial response definition, a malformed-response unit case, and a local/live case.
+Keep typed models limited to fields callers consume; maintain overlapping product
+constraints together. Schema assets are package data and must survive wheel builds.
 
 To add another service later, create `clients/<service>/`, its configuration and
 fixtures, and its real integration tests. Reuse `ApiClient`. Implement `TokenSource`

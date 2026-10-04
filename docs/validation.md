@@ -1,4 +1,48 @@
-# Phase 1 validation record
+# Validation records
+
+## Phase 2 — 2026-10-04
+
+Implemented version **0.2.0**: partial response schemas, strict Pydantic product/cart
+models, negative API scenarios, boundary/arithmetic checks, and maintained strategy
+and RCA instructions. The upstream existing-cart versus cart-add discount-field
+difference is covered by distinct contracts and unit regressions.
+
+### Local verification
+
+| Check | Result |
+| --- | --- |
+| Exact dependency resolution and editable 0.2.0 install | Passed |
+| `ruff check .` / `ruff format --check .` | Passed |
+| Deterministic suite with JUnit XML | **102 passed; 32 live cases deselected** |
+| Test allocation | 59 unit + 11 local HTTP framework + 32 local service cases |
+| Collection including live versions | 134 cases |
+| Wheel and source distribution build | Passed; schema asset included |
+| Installed-wheel contract probe outside source package | Passed |
+| Local Markdown file links and `git diff --check` | Passed |
+
+Executed locally on Linux, Python **3.12.14**. New dependencies are jsonschema
+**4.26.0** and Pydantic **2.13.5**; complete pins are in requirements-dev.txt.
+The unit suite covers nested failures, additive fields, strict types, separate
+existing/created cart discount fields, and value-free displayed diagnostics.
+
+### GitHub Actions / live verification
+
+CI and live results are pending the Phase 2 publish and execution. Public DummyJSON
+execution uses the explicit GitHub Actions live job because this workspace previously
+could not reach the service reliably. Do not interpret local model passes as live
+compatibility evidence.
+
+### Phase 2 limitations
+
+Schemas describe only required fields consumed by the portfolio and allow additions.
+They do not validate every field, email format, JWT signatures, or provider ownership.
+Cart input models express our generator policy; the public API is more permissive.
+Cart writes are simulated. There is no RBAC/security audit, load benchmark, database,
+MFA, UI, or process-parallel execution claim.
+
+---
+
+## Phase 1 validation record
 
 Validated on **2026-10-04** in a Linux workspace using Python **3.12.14**.
 The local checks below were followed by successful GitHub Actions quality and live API runs.
@@ -65,5 +109,5 @@ live run.
 - Local execution used Python 3.12; CI additionally verified Python 3.11 and 3.13.
 - The live result is a point-in-time compatibility check, not an uptime guarantee.
 - Local responses are a minimal test double, not verified full DummyJSON contracts.
-- No JWT cryptographic validation, schema validator, security audit, load test, UI,
+- Phase 1 did not include JWT cryptographic validation, schema validation, security audit, load test, UI,
   database, MFA, persistent cart, or process-parallel execution is claimed.

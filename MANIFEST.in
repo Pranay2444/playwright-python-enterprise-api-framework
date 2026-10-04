@@ -5,3 +5,4 @@ recursive-include .agents *.md
 recursive-include .github *.yml
 recursive-include tests *.py *.md
 include src/README.md
+recursive-include src/api_framework/contracts *.json

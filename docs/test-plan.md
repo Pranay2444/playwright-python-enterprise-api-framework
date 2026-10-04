@@ -1,4 +1,8 @@
-# Phase 1 DummyJSON test plan
+# DummyJSON functional test plan
+
+Phase 1 scenarios remain the functional baseline. Phase 2 applies named response
+contracts to these scenarios and adds the coverage in the
+[Phase 2 test plan](phase-2-test-plan.md).
 
 ## Execution model
 

@@ -1,0 +1,321 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Partial DummyJSON response contracts",
+  "$comment": "Required fields consumed by this project. Additive fields are compatible. No remote references.",
+  "$defs": {
+    "product": {
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "price",
+        "category",
+        "stock",
+        "rating"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "price": {
+          "type": "number",
+          "minimum": 0
+        },
+        "category": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stock": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rating": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 5
+        }
+      }
+    },
+    "pagination": {
+      "type": "object",
+      "required": [
+        "total",
+        "skip",
+        "limit"
+      ],
+      "properties": {
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "skip": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "product_page": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/pagination"
+        }
+      ],
+      "type": "object",
+      "required": [
+        "products"
+      ],
+      "properties": {
+        "products": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/product"
+          }
+        }
+      }
+    },
+    "user": {
+      "type": "object",
+      "required": [
+        "id",
+        "username",
+        "firstName",
+        "lastName",
+        "email"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "username": {
+          "type": "string",
+          "minLength": 1
+        },
+        "firstName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lastName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "email": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "tokens": {
+      "type": "object",
+      "required": [
+        "accessToken",
+        "refreshToken"
+      ],
+      "properties": {
+        "accessToken": {
+          "type": "string",
+          "minLength": 1
+        },
+        "refreshToken": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "login": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/user"
+        },
+        {
+          "$ref": "#/$defs/tokens"
+        }
+      ]
+    },
+    "cart_page": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/pagination"
+        }
+      ],
+      "type": "object",
+      "required": [
+        "carts"
+      ],
+      "properties": {
+        "carts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/cart"
+          }
+        }
+      }
+    },
+    "error": {
+      "type": "object",
+      "required": [
+        "message"
+      ],
+      "properties": {
+        "message": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "cart_item_base": {
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "price",
+        "quantity",
+        "total",
+        "discountPercentage"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "price": {
+          "type": "number",
+          "minimum": 0
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "total": {
+          "type": "number",
+          "minimum": 0
+        },
+        "discountPercentage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        }
+      }
+    },
+    "cart_item": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/cart_item_base"
+        }
+      ],
+      "type": "object",
+      "required": [
+        "discountedTotal"
+      ],
+      "properties": {
+        "discountedTotal": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "created_cart_item": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/cart_item_base"
+        }
+      ],
+      "type": "object",
+      "required": [
+        "discountedPrice"
+      ],
+      "properties": {
+        "discountedPrice": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "cart_base": {
+      "type": "object",
+      "required": [
+        "id",
+        "userId",
+        "products",
+        "total",
+        "discountedTotal",
+        "totalProducts",
+        "totalQuantity"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "userId": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "products": {
+          "type": "array"
+        },
+        "total": {
+          "type": "number",
+          "minimum": 0
+        },
+        "discountedTotal": {
+          "type": "number",
+          "minimum": 0
+        },
+        "totalProducts": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "totalQuantity": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "cart": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/cart_base"
+        }
+      ],
+      "type": "object",
+      "properties": {
+        "products": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/cart_item"
+          }
+        }
+      }
+    },
+    "created_cart": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/cart_base"
+        }
+      ],
+      "type": "object",
+      "properties": {
+        "products": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/created_cart_item"
+          }
+        }
+      }
+    }
+  }
+}

@@ -56,5 +56,5 @@ def test_cart_payloads_do_not_share_mutable_data() -> None:
 
 
 def test_cart_factory_rejects_invalid_quantity() -> None:
-    with pytest.raises(ValueError, match="positive"):
+    with pytest.raises(ValueError, match="greater than 0"):
         cart_payload(503, 731, quantity=0)

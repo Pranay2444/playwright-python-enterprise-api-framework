@@ -1,13 +1,13 @@
 # Playwright Python Enterprise API Framework
 
-**Phase 1: a readable, reusable API automation foundation for an SDET portfolio.**
+**Phase 2: readable API automation with response contracts, negative tests, and boundary coverage.**
 
 This project uses **Python + Pytest + Playwright APIRequestContext** to test the
 DummyJSON e-commerce API. It starts small: transport, configuration, authentication,
 product discovery, users, and carts. Each layer has one responsibility, so adding a
 second service later does not require rewriting the HTTP client or test runner.
 
-The word "enterprise" describes the direction of this learning project. Phase 1 is
+The word "enterprise" describes the direction of this learning project. This is
 not a finished production framework. The capability table below separates working
 features from the roadmap.
 
@@ -16,9 +16,10 @@ features from the roadmap.
 1. Follow [Setup](#setup-on-macos-or-linux).
 2. Run the deterministic suite: `python -m pytest -m "not external"`.
 3. Read [the Phase 1 walkthrough](docs/phase-1-walkthrough.md) while opening the code.
-4. Run live DummyJSON checks explicitly when network access is available.
+4. Continue with [the Phase 2 walkthrough](docs/phase-2-walkthrough.md) for contracts and negative testing.
+5. Run live DummyJSON checks explicitly when network access is available.
 
-## What Phase 1 implements
+## What is implemented
 
 | Capability | Implementation |
 | --- | --- |
@@ -29,7 +30,11 @@ features from the roadmap.
 | Domain clients | `AuthClient`, `ProductsClient`, `UsersClient`, `CartsClient` |
 | Dynamic data | Product IDs from catalogue responses; user IDs from auth/cart responses |
 | Data factory | Fresh cart payloads; no mutable shared payloads |
-| Assertions | HTTP status, JSON content type, basic shape, and business relationships |
+| Response contracts | Packaged JSON Schema Draft 2020-12 contracts for products, users, tokens, carts, pages, and errors |
+| Typed validation | Strict Pydantic product views and cart input models; no numeric-string coercion |
+| Assertions | HTTP status, exact JSON media type, schema structure, and business relationships |
+| Negative coverage | Missing/invalid credentials and tokens, invalid IDs, malformed cart lists, unsupported method |
+| Boundaries | One-item pages, zero limit, exhausted pagination, empty search, quantities and monetary totals |
 | Isolation | Function-scoped contexts; a separate context for login cookies |
 | Diagnostics | Method, endpoint path, status, and elapsed time; no payload/header logging |
 | Repeatable checks | Unit tests plus local HTTP checks using the real Playwright driver |
@@ -63,13 +68,17 @@ so tests can assert an error response as easily as a successful response.
 | --- | --- |
 | `src/api_framework/config.py` | Load and validate settings |
 | `src/api_framework/core/api_client.py` | Send GET/POST/general requests; attach auth; log metadata |
-| `src/api_framework/core/responses.py` | Basic status and JSON assertions |
+| `src/api_framework/core/responses.py` | Status, JSON media type, and object assertions |
+| `src/api_framework/contracts/` | Checked-in schemas, safe contract diagnostics, strict Pydantic models |
 | `src/api_framework/auth/token_manager.py` | Cache, refresh, and invalidate tokens |
 | `src/api_framework/clients/dummyjson/` | DummyJSON endpoint paths and payload details |
 | `src/api_framework/data/cart_factory.py` | Create independent cart payloads |
 | `tests/conftest.py` | Create, connect, and dispose fixtures |
 | `tests/functional/` | Functional scenarios, each run against local or live targets |
-| `tests/unit/` | Token timing, cache behavior, configuration, mutable data isolation |
+| `tests/unit/` | Token policy, config, validator fault injection, model policy, JSON envelope checks |
+| `tests/contracts/` | Typed product parsing and refresh response contract |
+| `tests/negative/` | Rejected requests using isolated anonymous contexts |
+| `tests/boundary/` | Pagination/empty collections and simulated cart arithmetic |
 | `tests/local/` | Real HTTP integration checks for framework behavior |
 | `tests/support/local_api.py` | Minimal local test double |
 | `.github/workflows/quality.yml` | Quality gates and optional live verification |
@@ -114,6 +123,9 @@ Windows PowerShell: create the venv with `py -3 -m venv .venv`, activate with
 | Deterministic local suite | `python -m pytest -m "not external"` |
 | Default run with live cases shown as skipped | `python -m pytest` |
 | Local smoke scenarios | `python -m pytest -m "smoke and not external"` |
+| Local contract checks | `python -m pytest -m "contract and not external"` |
+| Local rejected requests | `python -m pytest -m "negative and not external"` |
+| Local boundary checks | `python -m pytest -m "boundary and not external"` |
 | Live DummyJSON only | `python -m pytest -m external --run-external` |
 | Live smoke only | `python -m pytest -m "smoke and external" --run-external` |
 | Both targets plus framework checks | `python -m pytest --run-external` |
@@ -147,6 +159,44 @@ The test plan records priorities and expected behavior in
 [docs/test-plan.md](docs/test-plan.md). Data prerequisites such as "at least two
 products" are explicit; the suite never fixes the catalogue size or a public ID.
 
+## Phase 2: contracts and rejection behavior
+
+Existing functional scenarios now call `contract_json(response, "product_page")`
+or the appropriate named contract before checking business relationships.
+`contract_json` checks the status, `application/json` media type, JSON object, and
+schema in that order. Clients still return raw `APIResponse` objects.
+
+JSON Schema is the response compatibility contract: required fields, nested types,
+and numeric ranges. Unknown response fields remain compatible, avoiding brittle
+full snapshots. Pydantic provides a strict typed product view for downstream use
+and validates generated cart requests. These are partial project contracts, not a
+complete OpenAPI specification or a provider-owned contract-testing system.
+
+Our cart factory requires positive integer IDs/quantities and nonempty items.
+DummyJSON accepts some inputs more permissively; factory validation does not prove
+that the server rejects those inputs. Negative API tests deliberately bypass the
+valid factory with raw dictionaries and assert verified service behavior.
+
+| Phase 2 coverage | Expected behavior |
+| --- | --- |
+| Missing username/password; wrong password | 400 with a JSON error message |
+| Missing or malformed access token | 401 on `/auth/me`, with no login cookies |
+| Missing / invalid refresh token | 401 / 403 respectively |
+| Zero or malformed product identifier | 404 JSON error |
+| `POST /products` | 404; an unmatched route need not have a JSON body |
+| Empty / non-array cart product list; missing user | 400 JSON error |
+| `limit=1`, `skip=0` | One product at the first offset |
+| `skip` at discovered catalogue total | Empty page with total retained |
+| `limit=0` | All products, as documented by DummyJSON |
+| Unmatched search | Valid empty collection |
+| Cart quantity 1 or 3 | Owner/product match; totals agree with price × quantity |
+
+Contract failures report a schema location and rule without response values.
+Pydantic models hide invalid inputs in their displayed validation errors. These
+protections do not make `--showlocals`, raw exceptions, or body dumps safe to share.
+See [contract maintenance](docs/contracts.md) and the
+[Phase 2 test plan](docs/phase-2-test-plan.md) for the rationale and scope.
+
 ## Authentication decisions
 
 - `TokenManager` receives a `TokenSource` protocol, so a future service can provide
@@ -168,10 +218,11 @@ products" are explicit; the suite never fixes the catalogue size or a public ID.
 
 Use the [testing strategy](docs/testing-strategy.md) for the test pyramid, risks,
 data isolation, and quality gates. For this phase, the broad base is framework unit
-checks, followed by local HTTP integration checks. A smaller live suite confirms
+checks, including deliberately invalid contracts/models, followed by local HTTP integration checks.
+A smaller live suite confirms
 real e-commerce API behavior. This repository has no UI tests yet.
 
-The workflow runs lint, formatting, and local tests on pushes to `main` and pull
+The workflow runs lint, formatting, distribution builds, and local tests on pushes to `main` and pull
 requests. A failure blocks that job. To run live tests in GitHub Actions, choose
 **Actions → API framework quality → Run workflow → Run the live DummyJSON suite**.
 The live job runs after quality succeeds, uses Python 3.12, and remains a separate
@@ -226,7 +277,7 @@ future services.
 | Phase | Planned capability | Status |
 | --- | --- | --- |
 | 1 | Core transport, DummyJSON auth/products/users/carts, CI, learning docs | Implemented |
-| 2 | JSON Schema/Pydantic, contract checks, negative and boundary tests | Planned |
+| 2 | JSON Schema/Pydantic, contract checks, negative and boundary tests | Implemented |
 | 3 | Restful Booker persistent booking create/read/update/patch/delete lifecycle | Planned |
 | 4 | ReqRes adapter; verify current API-key, persistence, and plan requirements first | Planned |
 | 5 | Owned FastAPI app, JWT, PostgreSQL, Mailpit, MFA, file workflows | Planned |
@@ -234,7 +285,7 @@ future services.
 
 See [docs/roadmap.md](docs/roadmap.md) for acceptance criteria. Security fuzzing,
 load testing, rate-limit stress, and cross-user access checks belong in an owned
-local environment. Phase 1 does not implement those capabilities.
+local environment. Those capabilities remain future work.
 
 ## Validation and sources
 
@@ -248,8 +299,13 @@ unverified live-service behavior. Official references used for this phase:
 - [DummyJSON products](https://dummyjson.com/docs/products)
 - [DummyJSON users](https://dummyjson.com/docs/users)
 - [DummyJSON carts](https://dummyjson.com/docs/carts)
+- [jsonschema validation](https://python-jsonschema.readthedocs.io/en/stable/validate/)
+- [Pydantic strict mode](https://docs.pydantic.dev/latest/concepts/strict_mode/)
+- [Phase 2 contract basis and maintenance policy](docs/contracts.md)
 
 **Portfolio explanation:** "I built a layered Python API automation foundation using
 Playwright and Pytest. It separates HTTP transport, service clients, token handling,
 fixtures, and assertions. Phase 1 covers DummyJSON e-commerce APIs with dynamic data,
-isolated authentication, repeatable local checks, and optional live verification."
+isolated authentication, repeatable local checks, and optional live verification.
+Phase 2 adds partial JSON Schema response contracts, strict Pydantic models, and
+negative/boundary cases while distinguishing framework policy from provider behavior."

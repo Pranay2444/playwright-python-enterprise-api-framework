@@ -4,17 +4,25 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "playwright-python-enterprise-api-framework"
-version = "0.1.0"
+version = "0.2.0"
 description = "An incremental Playwright Python API testing portfolio, starting with DummyJSON."
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = ["playwright>=1.51,<2", "python-dotenv>=1.0,<2"]
+dependencies = [
+  "playwright>=1.51,<2",
+  "python-dotenv>=1.0,<2",
+  "jsonschema>=4.23,<5",
+  "pydantic>=2.10,<3",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.3,<10", "ruff>=0.11,<1", "build>=1.2,<2"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+api_framework = ["contracts/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -28,6 +36,9 @@ markers = [
   "smoke: critical service checks",
   "regression: broader behavior coverage",
   "workflow: chained API calls, including simulated cart creation",
+  "contract: response schema or typed model compatibility",
+  "negative: invalid requests and authentication rejection",
+  "boundary: pagination, empty results, and minimum valid quantity",
 ]
 
 [tool.ruff]

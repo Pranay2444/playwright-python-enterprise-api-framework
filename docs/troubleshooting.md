@@ -13,6 +13,10 @@
 | A user's carts are empty | Data assumption | An empty collection is valid; use discovered existing-cart owner for nonempty coverage |
 | Refresh JWT matches the prior string | Token issuance timing | Validate authenticated identity; do not require different strings |
 | VS Code cannot resolve imports | Selected Python interpreter | Select this project's `.venv` interpreter and reinstall editable package |
+| `ContractValidationError` | Named contract, safe schema location, current provider response | Reproduce the smallest case; compare docs/contracts.md before changing rules |
+| Pydantic rejects a numeric string or boolean | Strict request/view policy | Fix generated data; keep raw invalid dicts only in negative tests |
+| Unknown contract name | Checked-in `$defs` names | Correct the name; this is configuration, not a product defect |
+| Missing schema after wheel install | Package data and build artifact | Rebuild with contracts/*.json included; verify the installed resource |
 
 Start a failure investigation with the smallest failing node:
 

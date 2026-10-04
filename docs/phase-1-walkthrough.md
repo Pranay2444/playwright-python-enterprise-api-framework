@@ -1,5 +1,8 @@
 # Phase 1: learn the code in small steps
 
+This guide explains the Phase 1 foundation. Phase 2 is now implemented; continue
+with [the Phase 2 walkthrough](phase-2-walkthrough.md) for contracts and negative tests.
+
 ## 1. Understand the minimum flow
 
 A test calls a domain method such as `products_client.list()`. That method knows
@@ -144,5 +147,5 @@ per test and refreshes proactively; it does not retry failed business requests. 
 discover data dynamically and validate API relationships. Local HTTP checks give
 repeatable feedback, while an explicitly enabled live suite checks DummyJSON."
 
-Describe contract/security/MFA/DB testing as the roadmap until you implement and
+Describe security/MFA/DB testing as the roadmap until you implement and
 execute those phases. Be clear that cart creation here is simulated.

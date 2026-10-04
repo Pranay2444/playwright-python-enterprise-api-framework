@@ -2,9 +2,12 @@
 
 | Folder | Purpose | Network |
 | --- | --- | --- |
-| `unit/` | Clock-driven cache behavior, configuration, data isolation | None |
+| `unit/` | Cache/config, schema fault injection, strict models, envelope/diagnostic policy | None |
 | `local/` | HTTP failures, auth isolation, query encoding, refresh, log protection | Loopback only |
 | `functional/` | Eleven e-commerce scenarios parameterized for local and live | Loopback or DummyJSON |
+| `contracts/` | Typed product view and refresh response compatibility | Loopback or DummyJSON |
+| `negative/` | Thirteen invalid request cases with expected statuses/error shape | Loopback or DummyJSON |
+| `boundary/` | Six page/search/quantity cases with business relationships | Loopback or DummyJSON |
 | `support/` | A small in-process HTTP test double | Listens on a random loopback port |
 
 The `settings` fixture generates `[local]` and `[live]` cases. `[live]` carries the
@@ -37,10 +40,10 @@ python -m pytest -m "regression and not external"
 python -m pytest --collect-only -q
 ```
 
-Use the status/content-type helper before reading fields. Assert relationships,
+Use `contract_json` before reading supported response fields. Assert relationships,
 not complete response snapshots. For example, compare the returned cart's user ID
 with the discovered user's ID; do not require a fixed catalogue count.
 
-The `[live]` cart-add test performs one documented simulated write. There is no
+Each `[live]` cart-add case performs one documented simulated write. There is no
 load loop, fuzzing, or broad security probing. Read [the strategy](../docs/testing-strategy.md)
 before expanding external coverage.

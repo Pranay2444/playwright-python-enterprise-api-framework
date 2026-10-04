@@ -14,11 +14,33 @@ from urllib.parse import parse_qs, urlsplit
 class LocalApi:
     def __init__(self) -> None:
         self.products = [
-            {"id": 731, "title": "Demo Hammer", "price": 12.5},
-            {"id": 947, "title": "Demo Drill", "price": 40.0},
+            {
+                "id": 731,
+                "title": "Demo Hammer",
+                "price": 12.5,
+                "category": "tools",
+                "stock": 8,
+                "rating": 4.3,
+                "discountPercentage": 10,
+            },
+            {
+                "id": 947,
+                "title": "Demo Drill",
+                "price": 40.0,
+                "category": "tools",
+                "stock": 0,
+                "rating": 4.5,
+                "discountPercentage": 5,
+            },
         ]
-        self.user = {"id": 503, "username": "demo-user", "firstName": "Demo"}
-        self.carts = [{"id": 811, "userId": 503, "products": [self.products[0]]}]
+        self.user = {
+            "id": 503,
+            "username": "demo-user",
+            "firstName": "Demo",
+            "lastName": "User",
+            "email": "demo@example.test",
+        }
+        self.carts = [self.make_cart(811, 503, [{"id": 731, "quantity": 2}])]
         self.requests: list[tuple[str, str]] = []
         self.login_count = 0
         self.refresh_count = 0
@@ -26,6 +48,35 @@ class LocalApi:
         self._refresh_tokens: set[str] = set()
         self._server: ThreadingHTTPServer | None = None
         self._thread: Thread | None = None
+
+    def make_cart(
+        self, cart_id: int, user_id: int, items: list[dict[str, Any]], *, created: bool = False
+    ) -> dict[str, Any]:
+        discount_field = "discountedPrice" if created else "discountedTotal"
+        products = []
+        for item in items:
+            source = next(p for p in self.products if p["id"] == item["id"])
+            total = source["price"] * item["quantity"]
+            products.append(
+                {
+                    "id": source["id"],
+                    "title": source["title"],
+                    "price": source["price"],
+                    "quantity": item["quantity"],
+                    "total": total,
+                    "discountPercentage": source["discountPercentage"],
+                    discount_field: round(total * (100 - source["discountPercentage"]) / 100),
+                }
+            )
+        return {
+            "id": cart_id,
+            "userId": user_id,
+            "products": products,
+            "total": sum(p["total"] for p in products),
+            "discountedTotal": sum(p[discount_field] for p in products),
+            "totalProducts": len(products),
+            "totalQuantity": sum(p["quantity"] for p in products),
+        }
 
     @property
     def base_url(self) -> str:
@@ -68,7 +119,16 @@ class LocalApi:
                         allowed = authorization.removeprefix("Bearer ") in service._access_tokens
                     else:
                         allowed = any(f"accessToken={t}" in cookie for t in service._access_tokens)
-                    self.send_json(200 if allowed else 401, service.user if allowed else {})
+                    self.send_json(
+                        200 if allowed else 401,
+                        service.user
+                        if allowed
+                        else {
+                            "message": "Invalid/Expired Token!"
+                            if authorization
+                            else "Access Token is required"
+                        },
+                    )
                 elif url.path in {"/products", "/products/search"}:
                     products = service.products
                     if url.path.endswith("search"):
@@ -76,7 +136,7 @@ class LocalApi:
                         products = [p for p in products if term in p["title"].casefold()]
                     skip = int(query.get("skip", ["0"])[0])
                     limit = int(query.get("limit", [str(len(products))])[0])
-                    selected = products[skip : skip + limit]
+                    selected = products[skip:] if limit == 0 else products[skip : skip + limit]
                     self.send_json(
                         200,
                         {
@@ -99,11 +159,21 @@ class LocalApi:
                 elif url.path == f"/users/{service.user['id']}":
                     self.send_json(200, service.user)
                 elif url.path == "/carts":
-                    self.send_json(200, {"carts": service.carts, "total": len(service.carts)})
+                    self.send_json(
+                        200,
+                        {
+                            "carts": service.carts,
+                            "total": len(service.carts),
+                            "skip": 0,
+                            "limit": len(service.carts),
+                        },
+                    )
                 elif url.path.startswith("/carts/user/"):
                     user_id = int(url.path.split("/")[-1])
                     carts = [c for c in service.carts if c["userId"] == user_id]
-                    self.send_json(200, {"carts": carts, "total": len(carts)})
+                    self.send_json(
+                        200, {"carts": carts, "total": len(carts), "skip": 0, "limit": len(carts)}
+                    )
                 elif url.path == "/unavailable":
                     self.send_json(503, {"message": "Service unavailable"})
                 else:
@@ -112,8 +182,12 @@ class LocalApi:
             def do_POST(self) -> None:
                 path = urlsplit(self.path).path
                 service.requests.append(("POST", path))
-                body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", "0"))))
+                raw = self.rfile.read(int(self.headers.get("Content-Length", "0")))
+                body = json.loads(raw) if raw else {}
                 if path == "/auth/login":
+                    if not body.get("username") or not body.get("password"):
+                        self.send_json(400, {"message": "Username and password required"})
+                        return
                     if (
                         body.get("username") != "demo-user"
                         or body.get("password") != "demo-password"
@@ -124,28 +198,31 @@ class LocalApi:
                     tokens = self.issue_tokens()
                     self.send_json(200, {**service.user, **tokens}, cookie=tokens["accessToken"])
                 elif path == "/auth/refresh":
+                    if not body.get("refreshToken"):
+                        self.send_json(401, {"message": "Refresh token required"})
+                        return
                     if body.get("refreshToken") not in service._refresh_tokens:
-                        self.send_json(401, {"message": "Invalid refresh token"})
+                        self.send_json(403, {"message": "Invalid refresh token"})
                         return
                     service.refresh_count += 1
                     tokens = self.issue_tokens()
                     self.send_json(200, tokens, cookie=tokens["accessToken"])
                 elif path == "/carts/add":
-                    products = []
-                    for item in body["products"]:
-                        product = next(p for p in service.products if p["id"] == item["id"])
-                        products.append({**product, "quantity": item["quantity"]})
+                    if not body.get("userId"):
+                        self.send_json(400, {"message": "User id is required"})
+                        return
+                    if body["userId"] != service.user["id"]:
+                        self.send_json(404, {"message": "User not found"})
+                        return
+                    items = body.get("products", [])
+                    if not isinstance(items, list):
+                        self.send_json(400, {"message": "products must be array of objects"})
+                        return
+                    if not items:
+                        self.send_json(400, {"message": "products can not be empty"})
+                        return
                     # Echo simulated creation, deliberately do not modify service.carts.
-                    self.send_json(
-                        201,
-                        {
-                            "id": 999,
-                            "userId": body["userId"],
-                            "products": products,
-                            "totalProducts": len(products),
-                            "totalQuantity": sum(p["quantity"] for p in products),
-                        },
-                    )
+                    self.send_json(201, service.make_cart(999, body["userId"], items, created=True))
                 else:
                     self.send_json(404, {"message": "Not found"})
 
